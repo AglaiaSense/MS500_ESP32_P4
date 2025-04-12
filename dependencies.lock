@@ -1,0 +1,149 @@
+dependencies:
+  avi_player:
+    dependencies: []
+    source:
+      path: E:\00-test\MS500_ESP32_P4\components\avi_player
+      type: local
+    version: 1.0.0
+  dsi_init:
+    dependencies:
+    - name: espressif/esp_lcd_ili9881c
+      version: ^1.0.0
+    - name: espressif/esp_lcd_ek79007
+      version: ^1.0.0
+    - name: waveshare/esp_lcd_jd9365_10_1
+      version: ^0.0.4
+    - name: idf
+      version: '>=5.3.0'
+    source:
+      path: E:\00-test\MS500_ESP32_P4\components\dsi_init
+      type: local
+    version: '*'
+  esp_cam_sensor:
+    dependencies: []
+    source:
+      path: E:\00-test\MS500_ESP32_P4\components\esp_cam_sensor
+      type: local
+    version: 1.0.0
+  espressif/cmake_utilities:
+    component_hash: 351350613ceafba240b761b4ea991e0f231ac7a9f59a9ee901f751bddc0bb18f
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=4.1'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 0.5.3
+  espressif/esp_lcd_ek79007:
+    component_hash: 07c1afab7e9fd4dd2fd06ff9245e65327c5bbd5485efec199496e19a9304d47b
+    dependencies:
+    - name: espressif/cmake_utilities
+      registry_url: https://components.espressif.com
+      require: private
+      version: 0.*
+    - name: idf
+      require: private
+      version: '>=5.3'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    targets:
+    - esp32p4
+    version: 1.0.2
+  espressif/esp_lcd_ili9881c:
+    component_hash: f4f374226b62baf13f735864e8fae58e17c537df34d598e059f6caad4761ef65
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.3'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    targets:
+    - esp32p4
+    version: 1.0.1
+  espressif/esp_sccb_intf:
+    component_hash: 19fd07c1296aaf03f61d0f5959c4b6d7d53380f499d28d5c197be0a8c6e04d74
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.3'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 0.0.4
+  espressif/tinyusb:
+    component_hash: 10703da2c3cd39a944711ee3d320c6dda54debabf13b4b933a7c90daf102372b
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.0'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    targets:
+    - esp32s2
+    - esp32s3
+    - esp32p4
+    version: 0.18.0~2
+  idf:
+    source:
+      type: idf
+    version: 5.4.0
+  lvgl/lvgl:
+    component_hash: 2409fdc84e9766d2a18afd84b051aef3f838348136cdb1c10ac2e8bcdb012bf6
+    dependencies: []
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 9.2.0
+  sensor_init:
+    dependencies:
+    - name: esp_cam_sensor
+      path: ../esp_cam_sensor
+    - name: idf
+      version: '>=5.3.0'
+    source:
+      path: E:\00-test\MS500_ESP32_P4\components\sensor_init
+      type: local
+    version: '*'
+  usb_device_uvc:
+    dependencies: []
+    source:
+      path: E:\00-test\MS500_ESP32_P4\components\usb_device_uvc
+      type: local
+    version: 1.1.2
+  waveshare/esp_lcd_jd9365_10_1:
+    component_hash: 698a894ecac3701dda7f64d35ca30cb2a0b48cfc56cda14eb19c9ba7aad204ed
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.3'
+    - name: espressif/cmake_utilities
+      registry_url: https://components.espressif.com
+      require: private
+      version: 0.*
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    targets:
+    - esp32p4
+    version: 0.0.4
+direct_dependencies:
+- avi_player
+- dsi_init
+- esp_cam_sensor
+- espressif/cmake_utilities
+- espressif/esp_lcd_ek79007
+- espressif/esp_lcd_ili9881c
+- espressif/esp_sccb_intf
+- espressif/tinyusb
+- idf
+- lvgl/lvgl
+- sensor_init
+- usb_device_uvc
+- waveshare/esp_lcd_jd9365_10_1
+manifest_hash: 759f074e4a8356cdb868e16273ac825dd67163766a20f5c733a38c47c6d475ab
+target: esp32p4
+version: 2.0.0

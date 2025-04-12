@@ -1,0 +1,18 @@
+version: 0.1.0
+targets:
+  - esp32p4
+dependencies:
+  idf:
+    version: ">=5.3.0"
+  dsi_init:
+    path: "../components/dsi_init"
+  sensor_init:
+    path: "../components/sensor_init"
+  usb_device_uvc:
+    version: "1.1.*"
+    override_path: "../components/usb_device_uvc"
+  avi_player:
+    version: "1.*"
+    override_path: "../components/avi_player"
+  lvgl/lvgl: #temp to workaround bsp issue
+    version: "9.2.0"

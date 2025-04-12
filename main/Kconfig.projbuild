@@ -1,0 +1,69 @@
+menu "Example Configuration"
+    config EXAMPLE_USED_LDO_CHAN_ID
+        int "example used LDO channel ID"
+        default 3
+        help
+            Example used LDO channel ID, you may check datasheet to know more details.
+
+    config EXAMPLE_USED_LDO_VOLTAGE_MV
+        int "example used LDO voltage in mV"
+        default 2500
+        range 0 3300
+        help
+            Example used LDO voltage, in mV
+
+    choice EXAMPLE_MIPI_CSI_DISP_HRES
+        bool "Set MIPI CSI horizontal resolution"
+        default EXAMPLE_MIPI_CSI_HRES_1024
+
+        config EXAMPLE_MIPI_CSI_HRES_800
+            bool "800"
+        config EXAMPLE_MIPI_CSI_HRES_1024
+            bool "1024"
+    endchoice
+
+    config EXAMPLE_MIPI_CSI_DISP_HRES
+        int
+        default 800 if EXAMPLE_MIPI_CSI_HRES_800
+        default 1024 if EXAMPLE_MIPI_CSI_HRES_1024
+
+   
+        choice EXAMPLE_MIPI_CSI_DISP_VRES
+        bool "Set MIPI CSI vertical resolution"
+        default EXAMPLE_MIPI_CSI_VRES_600
+
+        config EXAMPLE_MIPI_CSI_VRES_600
+            bool "600"
+        config EXAMPLE_MIPI_CSI_VRES_640
+            bool "640"
+        config EXAMPLE_MIPI_CSI_VRES_1280
+            bool "1280"
+    endchoice
+    choice DEVELOPMENT_BOARD_SELECTION
+        prompt "Select the development board you are using"
+        default ESP32_S3_USB_OTG if IDF_TARGET_ESP32S3
+        default ESP32_S2_GENERIC if IDF_TARGET_ESP32S2
+        help
+            Select this option to choose the board for the example.
+
+        config ESP32_S3_USB_OTG
+            bool "ESP32 S3 USB OTG"
+            depends on IDF_TARGET_ESP32S3
+
+        config ESP32_S3_GENERIC
+            bool "ESP32 S3 GENERIC"
+            depends on IDF_TARGET_ESP32S3
+
+        config ESP32_S2_GENERIC
+            bool "ESP32 S2 GENERIC"
+            depends on IDF_TARGET_ESP32S2
+
+    endchoice
+
+    config EXAMPLE_MIPI_CSI_DISP_VRES
+        int
+        default 600 if EXAMPLE_MIPI_CSI_VRES_600
+        default 640 if EXAMPLE_MIPI_CSI_VRES_640
+        default 1280 if EXAMPLE_MIPI_CSI_VRES_1280
+
+endmenu
