@@ -23,21 +23,21 @@
 #include "example_sensor_init.h"
 #include "example_config.h"
 
+
 #include "usb_device_uvc.h"
 #include "usb_cam.h"
 #include "esp_spiffs.h"
+ 
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+
+
 
 static const char *TAG = "cam_dsi";
 
 static bool s_camera_get_new_vb(esp_cam_ctlr_handle_t handle, esp_cam_ctlr_trans_t *trans, void *user_data);
 static bool s_camera_get_finished_trans(esp_cam_ctlr_handle_t handle, esp_cam_ctlr_trans_t *trans, void *user_data);
-
-extern  SemaphoreHandle_t frame_mutex;
-// 存储接收到的帧数据
-static esp_cam_ctlr_trans_t received_frame;
 
 // 定义周期性任务
 void periodic_task(void *pvParameters)
@@ -51,6 +51,8 @@ void periodic_task(void *pvParameters)
 
 void usb_uvc_device_init(void)
 {
+ 
+   
     printf(" _   _ _   _ _____     _____ _____ _____ _____ \n");
     printf("| | | | | | /  __ \\   |_   _|  ___/  ___|_   _|\n");
     printf("| | | | | | | /  \\/_____| | | |__ \\ `--.  | |  \n");
@@ -71,10 +73,11 @@ void usb_uvc_device_init(void)
     ESP_ERROR_CHECK(usb_cam2_init());
 #endif
     ESP_ERROR_CHECK(uvc_device_init());
+
 }
 
-void camerta_init(void)
-{
+void camert_init(void){
+    
     printf("  ____   ___    ___  _____  _____  _____  \n");
     printf(" / __ \\ / _ \\  |_ _|| ____||_   _||_   \n");
     printf("| |  | | /_\\ |  | | |  _|    | |    | |   \n");
@@ -106,7 +109,7 @@ void camerta_init(void)
     example_dsi_resource_alloc(&mipi_dsi_bus, &mipi_dbi_io, &mipi_dpi_panel, &frame_buffer);
 
     //---------------Necessary variable config------------------//
-    frame_buffer_size = CONFIG_EXAMPLE_MIPI_CSI_DISP_HRES * CONFIG_EXAMPLE_MIPI_CSI_DISP_VRES  * 2;
+    frame_buffer_size = CONFIG_EXAMPLE_MIPI_CSI_DISP_HRES * CONFIG_EXAMPLE_MIPI_DSI_DISP_VRES * EXAMPLE_RGB565_BITS_PER_PIXEL / 8;
 
     ESP_LOGD(TAG, "CONFIG_EXAMPLE_MIPI_CSI_DISP_HRES: %d, CONFIG_EXAMPLE_MIPI_DSI_DISP_VRES: %d, bits per pixel: %d", CONFIG_EXAMPLE_MIPI_CSI_DISP_HRES, CONFIG_EXAMPLE_MIPI_DSI_DISP_VRES, 8);
     ESP_LOGD(TAG, "frame_buffer_size: %zu", frame_buffer_size);
@@ -128,7 +131,7 @@ void camerta_init(void)
         .v_res = CONFIG_EXAMPLE_MIPI_CSI_DISP_VRES,
         .lane_bit_rate_mbps = EXAMPLE_MIPI_CSI_LANE_BITRATE_MBPS,
         .input_data_color_type = CAM_CTLR_COLOR_RAW8,
-        .output_data_color_type =  CAM_CTLR_COLOR_YUV420,
+        .output_data_color_type = CAM_CTLR_COLOR_RGB565,
         .data_lane_num = 2,
         .byte_swap_en = false,
         .queue_items = 1,
@@ -157,7 +160,7 @@ void camerta_init(void)
         .clk_hz = 80 * 1000 * 1000,
         .input_data_source = ISP_INPUT_DATA_SOURCE_CSI,
         .input_data_color_type = ISP_COLOR_RAW8,
-        .output_data_color_type = ISP_COLOR_YUV420,
+        .output_data_color_type = ISP_COLOR_RGB565,
         .has_line_start_packet = false,
         .has_line_end_packet = false,
         .h_res = CONFIG_EXAMPLE_MIPI_CSI_DISP_HRES,
@@ -167,35 +170,33 @@ void camerta_init(void)
     ESP_ERROR_CHECK(esp_isp_enable(isp_proc));
 
     //---------------DPI Reset------------------//
-    // example_dpi_panel_reset(mipi_dpi_panel);
+    example_dpi_panel_reset(mipi_dpi_panel);
 
     //init to all white
-    // memset(, 0xFF, frame_buffer_size);
-    // esp_cache_msync(frame_buffer(void *)frame_buffer, frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_C2M);
+    memset(frame_buffer, 0xFF, frame_buffer_size);
+    esp_cache_msync((void *)frame_buffer, frame_buffer_size, ESP_CACHE_MSYNC_FLAG_DIR_C2M);
 
     if (esp_cam_ctlr_start(cam_handle) != ESP_OK) {
         ESP_LOGE(TAG, "Driver start fail");
         return;
     }
 
-    // example_dpi_panel_init(mipi_dpi_panel);
+    example_dpi_panel_init(mipi_dpi_panel);
 
-    fflush(stdout);
+    
     while (1) {
         ESP_ERROR_CHECK(esp_cam_ctlr_receive(cam_handle, &new_trans, ESP_CAM_CTLR_MAX_DELAY));
     }
 }
-
 void app_main(void)
 {
     printf("---------------------------------------------\n");
     // 创建周期性任务
     xTaskCreate(periodic_task, "periodic_task", 2048, NULL, 5, NULL);
 
-    fflush(stdout);
-
     usb_uvc_device_init();
-    camerta_init();
+    camert_init();
+
 }
 
 static bool s_camera_get_new_vb(esp_cam_ctlr_handle_t handle, esp_cam_ctlr_trans_t *trans, void *user_data)
@@ -209,11 +210,5 @@ static bool s_camera_get_new_vb(esp_cam_ctlr_handle_t handle, esp_cam_ctlr_trans
 
 static bool s_camera_get_finished_trans(esp_cam_ctlr_handle_t handle, esp_cam_ctlr_trans_t *trans, void *user_data)
 {
-    if (xSemaphoreTake(frame_mutex, portMAX_DELAY) == pdTRUE) {
-        // 存储接收到的帧数据
-        received_frame.buffer = trans->buffer;
-        received_frame.buflen = trans->buflen;
-        xSemaphoreGive(frame_mutex);
-    }
     return false;
 }
