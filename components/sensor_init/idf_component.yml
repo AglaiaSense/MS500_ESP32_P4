@@ -1,5 +1,0 @@
-dependencies:
-  esp_cam_sensor: 
-    path: "../esp_cam_sensor"
-  idf:
-    version: ">=5.3.0"

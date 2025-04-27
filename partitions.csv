@@ -1,9 +1,0 @@
-
-# Note: if you change the phy_init or app partition offset, make sure to change the offset in Kconfig.projbuild
-# GD25Q128ESIG (16MB) 
-# Name,   Type, SubType, Offset,  Size
-nvs,      data, nvs,     0x9000,  0x6000,    
-phy_init, data, phy,     ,        0x1000,   
-factory,  app,  factory, ,        6M,        
-avi,      data, spiffs,  ,        6M,        
-coredump, data, coredump,,        64K,      

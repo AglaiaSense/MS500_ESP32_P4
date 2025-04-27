@@ -26,6 +26,12 @@ if(CONFIG_CAMERA_OV5647)
     list(APPEND priv_include_dirs "sensors/ov5647/private_include")
 endif()
 
+if(CONFIG_CAMERA_IMX500)
+    list(APPEND srcs "sensors/imx500/imx500.c")
+    list(APPEND include_dirs "sensors/imx500/include")
+    list(APPEND priv_include_dirs "sensors/imx500/private_include")
+endif()
+
 if(CONFIG_CAMERA_SC2336)
     list(APPEND srcs "sensors/sc2336/sc2336.c")
     list(APPEND include_dirs "sensors/sc2336/include")
@@ -103,6 +109,10 @@ endif()
 
 if(CONFIG_CAMERA_OV5647_AUTO_DETECT)
     target_link_libraries(${COMPONENT_LIB} INTERFACE "-u ov5647_detect")
+endif()
+
+if(CONFIG_CAMERA_IMX500_AUTO_DETECT)
+    target_link_libraries(${COMPONENT_LIB} INTERFACE "-u imx500_detect")
 endif()
 
 if(CONFIG_CAMERA_SC2336_AUTO_DETECT)

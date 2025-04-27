@@ -4,81 +4,71 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <string.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
 #include "driver/gpio.h"
 #include "esp_err.h"
 #include "esp_log.h"
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <string.h>
 
 #include "esp_cam_sensor.h"
 #include "esp_cam_sensor_detect.h"
-#include "ov5647_settings.h"
 #include "ov5647.h"
+#include "ov5647_settings.h"
 
 #define OV5647_IO_MUX_LOCK(mux)
 #define OV5647_IO_MUX_UNLOCK(mux)
-#define OV5647_ENABLE_OUT_CLOCK(pin,clk)
+#define OV5647_ENABLE_OUT_CLOCK(pin, clk)
 #define OV5647_DISABLE_OUT_CLOCK(pin)
 
-#define OV5647_PID         0x5647
+#define OV5647_PID 0x5647
 #define OV5647_SENSOR_NAME "OV5647"
 #define OV5647_AE_TARGET_DEFAULT (0x50)
 
 #ifndef portTICK_RATE_MS
 #define portTICK_RATE_MS portTICK_PERIOD_MS
 #endif
-#define delay_ms(ms)  vTaskDelay((ms > portTICK_PERIOD_MS ? ms/ portTICK_PERIOD_MS : 1))
+#define delay_ms(ms) vTaskDelay((ms > portTICK_PERIOD_MS ? ms / portTICK_PERIOD_MS : 1))
 #define OV5647_SUPPORT_NUM CONFIG_CAMERA_OV5647_MAX_SUPPORT
 
 static const char *TAG = "ov5647";
 
 static const esp_cam_sensor_isp_info_t ov5647_isp_info[] = {
-    {
-        .isp_v1_info = {
-            .version = SENSOR_ISP_INFO_VERSION_DEFAULT,
-            .pclk = 81666700,
-            .vts = 1896,
-            .hts = 984,
-            .bayer_type = ESP_CAM_SENSOR_BAYER_GBRG,
-        }
-    },
-    {
-        .isp_v1_info = {
-            .version = SENSOR_ISP_INFO_VERSION_DEFAULT,
-            .pclk = 81666700,
-            .vts = 1896,
-            .hts = 984,
-            .bayer_type = ESP_CAM_SENSOR_BAYER_GBRG,
-        }
-    },
-    {
-        .isp_v1_info = {
-            .version = SENSOR_ISP_INFO_VERSION_DEFAULT,
-            .pclk = 81666700,
-            .vts = 1896,
-            .hts = 984,
-            .bayer_type = ESP_CAM_SENSOR_BAYER_GBRG,
-        }
-    },
-    {
-        .isp_v1_info = {
-            .version = SENSOR_ISP_INFO_VERSION_DEFAULT,
-            .pclk = 81666700,
-            .vts = 1104,
-            .hts = 2416,
-            .bayer_type = ESP_CAM_SENSOR_BAYER_GBRG,
-        }
-    },
-    {
-        .isp_v1_info = {
-            .version = SENSOR_ISP_INFO_VERSION_DEFAULT,
-            .pclk = 88333333,
-            .vts = 1796,
-            .hts = 1093,
-            .bayer_type = ESP_CAM_SENSOR_BAYER_GBRG,
-        }
-    },
+    {.isp_v1_info = {
+         .version = SENSOR_ISP_INFO_VERSION_DEFAULT,
+         .pclk = 81666700,
+         .vts = 1896,
+         .hts = 984,
+         .bayer_type = ESP_CAM_SENSOR_BAYER_GBRG,
+     }},
+    {.isp_v1_info = {
+         .version = SENSOR_ISP_INFO_VERSION_DEFAULT,
+         .pclk = 81666700,
+         .vts = 1896,
+         .hts = 984,
+         .bayer_type = ESP_CAM_SENSOR_BAYER_GBRG,
+     }},
+    {.isp_v1_info = {
+         .version = SENSOR_ISP_INFO_VERSION_DEFAULT,
+         .pclk = 81666700,
+         .vts = 1896,
+         .hts = 984,
+         .bayer_type = ESP_CAM_SENSOR_BAYER_GBRG,
+     }},
+    {.isp_v1_info = {
+         .version = SENSOR_ISP_INFO_VERSION_DEFAULT,
+         .pclk = 81666700,
+         .vts = 1104,
+         .hts = 2416,
+         .bayer_type = ESP_CAM_SENSOR_BAYER_GBRG,
+     }},
+    {.isp_v1_info = {
+         .version = SENSOR_ISP_INFO_VERSION_DEFAULT,
+         .pclk = 88333333,
+         .vts = 1796,
+         .hts = 1093,
+         .bayer_type = ESP_CAM_SENSOR_BAYER_GBRG,
+     }},
 };
 
 static const esp_cam_sensor_format_t ov5647_format_info[] = {
@@ -174,19 +164,25 @@ static const esp_cam_sensor_format_t ov5647_format_info[] = {
     },
 };
 
-static esp_err_t ov5647_read(esp_sccb_io_handle_t sccb_handle, uint16_t reg, uint8_t *read_buf)
-{
-    return esp_sccb_transmit_receive_reg_a16v8(sccb_handle, reg, read_buf);
+static esp_err_t ov5647_read(esp_sccb_io_handle_t sccb_handle, uint16_t reg, uint8_t *read_buf) {
+
+
+    esp_err_t ret =  esp_sccb_transmit_receive_reg_a16v8(sccb_handle, reg, read_buf);
+
+    esp_rom_printf("ov5647_read:reg=0x%04x, data=0x%02x\n", reg, *read_buf);
+
+    return ret;
 }
 
-static esp_err_t ov5647_write(esp_sccb_io_handle_t sccb_handle, uint16_t reg, uint8_t data)
-{
+static esp_err_t ov5647_write(esp_sccb_io_handle_t sccb_handle, uint16_t reg, uint8_t data) {
     return esp_sccb_transmit_reg_a16v8(sccb_handle, reg, data);
 }
 
 /* write a array of registers */
-static esp_err_t ov5647_write_array(esp_sccb_io_handle_t sccb_handle, const ov5647_reginfo_t *regarray)
-{
+static esp_err_t ov5647_write_array(esp_sccb_io_handle_t sccb_handle, const ov5647_reginfo_t *regarray) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
+
     int i = 0;
     esp_err_t ret = ESP_OK;
     while ((ret == ESP_OK) && regarray[i].reg != OV5647_REG_END) {
@@ -201,8 +197,9 @@ static esp_err_t ov5647_write_array(esp_sccb_io_handle_t sccb_handle, const ov56
     return ret;
 }
 
-static esp_err_t ov5647_set_reg_bits(esp_sccb_io_handle_t sccb_handle, uint16_t reg, uint8_t offset, uint8_t length, uint8_t value)
-{
+static esp_err_t ov5647_set_reg_bits(esp_sccb_io_handle_t sccb_handle, uint16_t reg, uint8_t offset, uint8_t length, uint8_t value) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     esp_err_t ret = ESP_OK;
     uint8_t reg_data = 0;
 
@@ -216,13 +213,15 @@ static esp_err_t ov5647_set_reg_bits(esp_sccb_io_handle_t sccb_handle, uint16_t 
     return ret;
 }
 
-static esp_err_t ov5647_set_test_pattern(esp_cam_sensor_device_t *dev, int enable)
-{
+static esp_err_t ov5647_set_test_pattern(esp_cam_sensor_device_t *dev, int enable) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     return ov5647_set_reg_bits(dev->sccb_handle, 0x503D, 7, 1, enable ? 0x01 : 0x00);
 }
 
-static esp_err_t ov5647_hw_reset(esp_cam_sensor_device_t *dev)
-{
+static esp_err_t ov5647_hw_reset(esp_cam_sensor_device_t *dev) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     if (dev->reset_pin >= 0) {
         gpio_set_level(dev->reset_pin, 0);
         delay_ms(10);
@@ -232,19 +231,22 @@ static esp_err_t ov5647_hw_reset(esp_cam_sensor_device_t *dev)
     return 0;
 }
 
-static esp_err_t ov5647_soft_reset(esp_cam_sensor_device_t *dev)
-{
+static esp_err_t ov5647_soft_reset(esp_cam_sensor_device_t *dev) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     esp_err_t ret = ov5647_set_reg_bits(dev->sccb_handle, 0x0103, 0, 1, 0x01);
     delay_ms(5);
     return ret;
 }
 
-static esp_err_t ov5647_get_sensor_id(esp_cam_sensor_device_t *dev, esp_cam_sensor_id_t *id)
-{
+static esp_err_t ov5647_get_sensor_id(esp_cam_sensor_device_t *dev, esp_cam_sensor_id_t *id) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     uint8_t pid_h, pid_l;
     esp_err_t ret = ov5647_read(dev->sccb_handle, OV5647_REG_SENSOR_ID_H, &pid_h);
     ESP_RETURN_ON_FALSE(ret == ESP_OK, ret, TAG, "read pid_h failed");
 
+ 
     ret = ov5647_read(dev->sccb_handle, OV5647_REG_SENSOR_ID_L, &pid_l);
     ESP_RETURN_ON_FALSE(ret == ESP_OK, ret, TAG, "read pid_l failed");
 
@@ -252,11 +254,19 @@ static esp_err_t ov5647_get_sensor_id(esp_cam_sensor_device_t *dev, esp_cam_sens
     if (pid) {
         id->pid = pid;
     }
+
+
+     ret = ov5647_read(dev->sccb_handle, 0x3035, &pid_h);
+     esp_rom_printf("----------------------------------------\n");
+    esp_rom_printf("pid_h=0x%02x\n", pid_h);
+
+
     return ret;
 }
 
-static esp_err_t ov5647_set_stream(esp_cam_sensor_device_t *dev, int enable)
-{
+static esp_err_t ov5647_set_stream(esp_cam_sensor_device_t *dev, int enable) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     esp_err_t ret;
     uint8_t val = OV5647_MIPI_CTRL00_BUS_IDLE;
     if (enable) {
@@ -290,18 +300,21 @@ static esp_err_t ov5647_set_stream(esp_cam_sensor_device_t *dev, int enable)
     return ret;
 }
 
-static esp_err_t ov5647_set_mirror(esp_cam_sensor_device_t *dev, int enable)
-{
+static esp_err_t ov5647_set_mirror(esp_cam_sensor_device_t *dev, int enable) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     return ov5647_set_reg_bits(dev->sccb_handle, 0x3821, 1, 1, enable ? 0x01 : 0x00);
 }
 
-static esp_err_t ov5647_set_vflip(esp_cam_sensor_device_t *dev, int enable)
-{
+static esp_err_t ov5647_set_vflip(esp_cam_sensor_device_t *dev, int enable) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     return ov5647_set_reg_bits(dev->sccb_handle, 0x3820, 1, 1, enable ? 0x01 : 0x00);
 }
 
-static esp_err_t ov5647_set_AE_target(esp_cam_sensor_device_t *dev, int target)
-{
+static esp_err_t ov5647_set_AE_target(esp_cam_sensor_device_t *dev, int target) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     esp_err_t ret = ESP_OK;
     /* stable in high */
     int fast_high, fast_low;
@@ -325,9 +338,9 @@ static esp_err_t ov5647_set_AE_target(esp_cam_sensor_device_t *dev, int target)
     return ret;
 }
 
+static esp_err_t ov5647_query_para_desc(esp_cam_sensor_device_t *dev, esp_cam_sensor_param_desc_t *qdesc) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
 
-static esp_err_t ov5647_query_para_desc(esp_cam_sensor_device_t *dev, esp_cam_sensor_param_desc_t *qdesc)
-{
     esp_err_t ret = ESP_OK;
     switch (qdesc->id) {
     case ESP_CAM_SENSOR_VFLIP:
@@ -346,7 +359,7 @@ static esp_err_t ov5647_query_para_desc(esp_cam_sensor_device_t *dev, esp_cam_se
         qdesc->default_value = OV5647_AE_TARGET_DEFAULT;
         break;
     default: {
-        ESP_LOGD(TAG, "id=%"PRIx32" is not supported", qdesc->id);
+        ESP_LOGD(TAG, "id=%" PRIx32 " is not supported", qdesc->id);
         ret = ESP_ERR_INVALID_ARG;
         break;
     }
@@ -354,13 +367,15 @@ static esp_err_t ov5647_query_para_desc(esp_cam_sensor_device_t *dev, esp_cam_se
     return ret;
 }
 
-static esp_err_t ov5647_get_para_value(esp_cam_sensor_device_t *dev, uint32_t id, void *arg, size_t size)
-{
+static esp_err_t ov5647_get_para_value(esp_cam_sensor_device_t *dev, uint32_t id, void *arg, size_t size) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     return ESP_ERR_NOT_SUPPORTED;
 }
 
-static esp_err_t ov5647_set_para_value(esp_cam_sensor_device_t *dev, uint32_t id, const void *arg, size_t size)
-{
+static esp_err_t ov5647_set_para_value(esp_cam_sensor_device_t *dev, uint32_t id, const void *arg, size_t size) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     esp_err_t ret = ESP_OK;
 
     switch (id) {
@@ -392,8 +407,9 @@ static esp_err_t ov5647_set_para_value(esp_cam_sensor_device_t *dev, uint32_t id
     return ret;
 }
 
-static esp_err_t ov5647_query_support_formats(esp_cam_sensor_device_t *dev, esp_cam_sensor_format_array_t *formats)
-{
+static esp_err_t ov5647_query_support_formats(esp_cam_sensor_device_t *dev, esp_cam_sensor_format_array_t *formats) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     ESP_CAM_SENSOR_NULL_POINTER_CHECK(TAG, dev);
     ESP_CAM_SENSOR_NULL_POINTER_CHECK(TAG, formats);
 
@@ -402,8 +418,9 @@ static esp_err_t ov5647_query_support_formats(esp_cam_sensor_device_t *dev, esp_
     return ESP_OK;
 }
 
-static esp_err_t ov5647_query_support_capability(esp_cam_sensor_device_t *dev, esp_cam_sensor_capability_t *sensor_cap)
-{
+static esp_err_t ov5647_query_support_capability(esp_cam_sensor_device_t *dev, esp_cam_sensor_capability_t *sensor_cap) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     ESP_CAM_SENSOR_NULL_POINTER_CHECK(TAG, dev);
     ESP_CAM_SENSOR_NULL_POINTER_CHECK(TAG, sensor_cap);
 
@@ -411,8 +428,9 @@ static esp_err_t ov5647_query_support_capability(esp_cam_sensor_device_t *dev, e
     return ESP_OK;
 }
 
-static int ov5647_get_sysclk(esp_cam_sensor_device_t *dev)
-{
+static int ov5647_get_sysclk(esp_cam_sensor_device_t *dev) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     /* calculate sysclk */
     int xvclk = dev->cur_format->xclk / 10000;
     int sysclk = 0;
@@ -447,8 +465,9 @@ static int ov5647_get_sysclk(esp_cam_sensor_device_t *dev)
     return sysclk;
 }
 
-static int ov5647_get_hts(esp_cam_sensor_device_t *dev)
-{
+static int ov5647_get_hts(esp_cam_sensor_device_t *dev) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     /* read HTS from register settings */
     int hts = 0;
     uint8_t temp1, temp2;
@@ -460,8 +479,9 @@ static int ov5647_get_hts(esp_cam_sensor_device_t *dev)
     return hts;
 }
 
-static int ov5647_get_vts(esp_cam_sensor_device_t *dev)
-{
+static int ov5647_get_vts(esp_cam_sensor_device_t *dev) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     /* read VTS from register settings */
     int vts = 0;
     uint8_t temp1, temp2;
@@ -475,8 +495,9 @@ static int ov5647_get_vts(esp_cam_sensor_device_t *dev)
     return vts;
 }
 
-static int ov5647_get_light_freq(esp_cam_sensor_device_t *dev)
-{
+static int ov5647_get_light_freq(esp_cam_sensor_device_t *dev) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     /* get banding filter value */
     uint8_t temp, temp1;
     int light_freq = 0;
@@ -506,8 +527,9 @@ static int ov5647_get_light_freq(esp_cam_sensor_device_t *dev)
     return light_freq;
 }
 
-static esp_err_t ov5647_set_bandingfilter(esp_cam_sensor_device_t *dev)
-{
+static esp_err_t ov5647_set_bandingfilter(esp_cam_sensor_device_t *dev) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     esp_err_t ret;
     int prev_sysclk, prev_VTS, prev_HTS;
     int band_step60, max_band60, band_step50, max_band50;
@@ -539,8 +561,9 @@ static esp_err_t ov5647_set_bandingfilter(esp_cam_sensor_device_t *dev)
     return ret;
 }
 
-static esp_err_t ov5647_set_format(esp_cam_sensor_device_t *dev, const esp_cam_sensor_format_t *format)
-{
+static esp_err_t ov5647_set_format(esp_cam_sensor_device_t *dev, const esp_cam_sensor_format_t *format) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     ESP_CAM_SENSOR_NULL_POINTER_CHECK(TAG, dev);
 
     esp_err_t ret = ESP_OK;
@@ -564,6 +587,8 @@ static esp_err_t ov5647_set_format(esp_cam_sensor_device_t *dev, const esp_cam_s
     ESP_RETURN_ON_FALSE(ret == ESP_OK, ret, TAG, "set ae target failed");
     ov5647_set_bandingfilter(dev);
 
+    esp_rom_printf("format 2 :%s\n", format->name);
+
     // stop stream default
     ret = ov5647_set_stream(dev, 0);
     ESP_RETURN_ON_FALSE(ret == ESP_OK, ret, TAG, "write stream regs failed");
@@ -574,8 +599,9 @@ static esp_err_t ov5647_set_format(esp_cam_sensor_device_t *dev, const esp_cam_s
     return ret;
 }
 
-static esp_err_t ov5647_get_format(esp_cam_sensor_device_t *dev, esp_cam_sensor_format_t *format)
-{
+static esp_err_t ov5647_get_format(esp_cam_sensor_device_t *dev, esp_cam_sensor_format_t *format) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     ESP_CAM_SENSOR_NULL_POINTER_CHECK(TAG, dev);
     ESP_CAM_SENSOR_NULL_POINTER_CHECK(TAG, format);
 
@@ -588,8 +614,10 @@ static esp_err_t ov5647_get_format(esp_cam_sensor_device_t *dev, esp_cam_sensor_
     return ret;
 }
 
-static esp_err_t ov5647_priv_ioctl(esp_cam_sensor_device_t *dev, uint32_t cmd, void *arg)
-{
+static esp_err_t ov5647_priv_ioctl(esp_cam_sensor_device_t *dev, uint32_t cmd, void *arg) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+    esp_rom_printf("cmd: %lu, arg: %p\n", cmd, arg); // 打印cmd和arg
+
     ESP_CAM_SENSOR_NULL_POINTER_CHECK(TAG, dev);
 
     esp_err_t ret = ESP_FAIL;
@@ -604,8 +632,10 @@ static esp_err_t ov5647_priv_ioctl(esp_cam_sensor_device_t *dev, uint32_t cmd, v
         ret = ov5647_soft_reset(dev);
         break;
     case ESP_CAM_SENSOR_IOC_S_REG:
+        esp_rom_printf("%s(%d)\n", __func__, __LINE__);
         sensor_reg = (esp_cam_sensor_reg_val_t *)arg;
         ret = ov5647_write(dev->sccb_handle, sensor_reg->regaddr, sensor_reg->value);
+
         break;
     case ESP_CAM_SENSOR_IOC_S_STREAM:
         ret = ov5647_set_stream(dev, *(int *)arg);
@@ -614,6 +644,8 @@ static esp_err_t ov5647_priv_ioctl(esp_cam_sensor_device_t *dev, uint32_t cmd, v
         ret = ov5647_set_test_pattern(dev, *(int *)arg);
         break;
     case ESP_CAM_SENSOR_IOC_G_REG:
+        esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
         sensor_reg = (esp_cam_sensor_reg_val_t *)arg;
         ret = ov5647_read(dev->sccb_handle, sensor_reg->regaddr, &regval);
         if (ret == ESP_OK) {
@@ -624,6 +656,8 @@ static esp_err_t ov5647_priv_ioctl(esp_cam_sensor_device_t *dev, uint32_t cmd, v
         ret = ov5647_get_sensor_id(dev, arg);
         break;
     default:
+        esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
         ret = ESP_ERR_INVALID_ARG;
         break;
     }
@@ -631,8 +665,9 @@ static esp_err_t ov5647_priv_ioctl(esp_cam_sensor_device_t *dev, uint32_t cmd, v
     return ret;
 }
 
-static esp_err_t ov5647_power_on(esp_cam_sensor_device_t *dev)
-{
+static esp_err_t ov5647_power_on(esp_cam_sensor_device_t *dev) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     esp_err_t ret = ESP_OK;
 
     if (dev->xclk_pin >= 0) {
@@ -640,7 +675,7 @@ static esp_err_t ov5647_power_on(esp_cam_sensor_device_t *dev)
     }
 
     if (dev->pwdn_pin >= 0) {
-        gpio_config_t conf = { 0 };
+        gpio_config_t conf = {0};
         conf.pin_bit_mask = 1LL << dev->pwdn_pin;
         conf.mode = GPIO_MODE_OUTPUT;
         ret = gpio_config(&conf);
@@ -654,7 +689,7 @@ static esp_err_t ov5647_power_on(esp_cam_sensor_device_t *dev)
     }
 
     if (dev->reset_pin >= 0) {
-        gpio_config_t conf = { 0 };
+        gpio_config_t conf = {0};
         conf.pin_bit_mask = 1LL << dev->reset_pin;
         conf.mode = GPIO_MODE_OUTPUT;
         ret = gpio_config(&conf);
@@ -669,8 +704,9 @@ static esp_err_t ov5647_power_on(esp_cam_sensor_device_t *dev)
     return ret;
 }
 
-static esp_err_t ov5647_power_off(esp_cam_sensor_device_t *dev)
-{
+static esp_err_t ov5647_power_off(esp_cam_sensor_device_t *dev) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     esp_err_t ret = ESP_OK;
 
     if (dev->xclk_pin >= 0) {
@@ -694,8 +730,9 @@ static esp_err_t ov5647_power_off(esp_cam_sensor_device_t *dev)
     return ret;
 }
 
-static esp_err_t ov5647_delete(esp_cam_sensor_device_t *dev)
-{
+static esp_err_t ov5647_delete(esp_cam_sensor_device_t *dev) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+
     ESP_LOGD(TAG, "del ov5647 (%p)", dev);
     if (dev) {
         free(dev);
@@ -714,12 +751,13 @@ static const esp_cam_sensor_ops_t ov5647_ops = {
     .set_format = ov5647_set_format,
     .get_format = ov5647_get_format,
     .priv_ioctl = ov5647_priv_ioctl,
-    .del = ov5647_delete
-};
+    .del = ov5647_delete};
 
 // We need manage these devices, and maybe need to add it into the private member of esp_device
-esp_cam_sensor_device_t *ov5647_detect(esp_cam_sensor_config_t *config)
-{
+esp_cam_sensor_device_t *ov5647_detect(esp_cam_sensor_config_t *config) {
+    esp_rom_printf("%s(%d)\n", __func__, __LINE__);
+    
+
     esp_cam_sensor_device_t *dev = NULL;
 
     if (config == NULL) {
@@ -760,6 +798,8 @@ esp_cam_sensor_device_t *ov5647_detect(esp_cam_sensor_config_t *config)
     }
     ESP_LOGI(TAG, "Detected Camera sensor PID=0x%x", dev->id.pid);
 
+
+
     return dev;
 
 err_free_handler:
@@ -770,8 +810,7 @@ err_free_handler:
 }
 
 #if CONFIG_CAMERA_OV5647_AUTO_DETECT_MIPI_INTERFACE_SENSOR
-ESP_CAM_SENSOR_DETECT_FN(ov5647_detect, ESP_CAM_SENSOR_MIPI_CSI, OV5647_SCCB_ADDR)
-{
+ESP_CAM_SENSOR_DETECT_FN(ov5647_detect, ESP_CAM_SENSOR_MIPI_CSI, OV5647_SCCB_ADDR) {
     ((esp_cam_sensor_config_t *)config)->sensor_port = ESP_CAM_SENSOR_MIPI_CSI;
     return ov5647_detect(config);
 }
