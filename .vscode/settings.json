@@ -1,0 +1,15 @@
+{
+    "files.associations": {
+        "*.lua": "lua",
+        "*.cpp": "cpp",
+        "videodev2.h": "c",
+        "mman.h": "c",
+        "esp_video_init.h": "c",
+        "esp_video_device.h": "c",
+        "usb_device_uvc.h": "c",
+        "stdio.h": "c",
+        "bsp_uvc.h": "c"
+    },
+    "idf.portWin": "COM9",
+    "idf.flashType": "UART"
+}
