@@ -17,7 +17,14 @@
         "ioctl.h": "c",
         "bsp_config.h": "c",
         "fcntl.h": "c",
-        "bsp_video.h": "c"
+        "bsp_video.h": "c",
+        "string.h": "c",
+        "esp_log.h": "c",
+        "sd_pwr_ctrl_by_on_chip_ldo.h": "c",
+        "esp_vfs_fat.h": "c",
+        "regex": "c",
+        "xiosbase": "c",
+        "tusb.h": "c"
     },
     "idf.portWin": "COM9",
     "idf.flashType": "UART"

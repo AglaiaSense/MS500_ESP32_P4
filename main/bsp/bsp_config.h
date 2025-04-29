@@ -11,13 +11,12 @@
 #include "esp_log.h"
 #include "esp_err.h"
 
+#include <fcntl.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/param.h>
 #include <sys/errno.h>
-
-
-#include <fcntl.h>
-#include <sys/ioctl.h>
+#include <sys/time.h>
 
 #include "linux/videodev2.h"
 #include "esp_video_init.h"
@@ -25,6 +24,14 @@
 
 #include "uvc_frame_config.h"
 #include "usb_device_uvc.h"
+
+
+#include "sdmmc_cmd.h"
+#include "driver/sdmmc_host.h"
+// #include "sd_test_io.h"
+#if SOC_SDMMC_IO_POWER_EXTERNAL
+#include "sd_pwr_ctrl_by_on_chip_ldo.h"
+#endif
 
 
 // 常用宏定义
@@ -47,8 +54,25 @@
 #endif
 
 
+ 
+/**
+ * @brief SD card encoder image data format
+ */
+typedef enum {
+    SD_IMG_FORMAT_JPEG,            /*!< JPEG format */
+    SD_IMG_FORMAT_H264,            /*!< H264 format */
+} sd_image_format_t;
 
-// 通用结构体定义
+/* SD Card framebuffer type */
+typedef struct sd_card_fb {
+    uint8_t *buf;
+    size_t buf_bytesused;
+    sd_image_format_t fmt;
+    size_t width;               /*!< Width of the image frame in pixels */
+    size_t height;              /*!< Height of the image frame in pixels */
+    struct timeval timestamp;   /*!< Timestamp since boot of the frame */
+} sd_card_fb_t;
+
 typedef struct device_ctx {
     int cap_fd;
     uint32_t format;
@@ -58,6 +82,13 @@ typedef struct device_ctx {
     uint8_t *m2m_cap_buffer;
 
     uvc_fb_t fb;
+
+    sd_card_fb_t sd_fb;
+    sdmmc_card_t *card;
+#if CONFIG_EXAMPLE_SD_PWR_CTRL_LDO_INTERNAL_IO
+    sd_pwr_ctrl_handle_t pwr_ctrl_handle;  /*!< Power control handle */
+#endif
+
 } device_ctx_t;
 
  

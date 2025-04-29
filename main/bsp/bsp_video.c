@@ -213,5 +213,7 @@ void bsp_video_init(void) {
     
     // 初始化视频编码功能
     ESP_ERROR_CHECK(init_codec_video(device_ctx));
+
+
 }
  

@@ -1,10 +1,17 @@
+
 file(GLOB_RECURSE SOURCES ./*.cpp ./*.c
                             )
 
 idf_component_register(SRCS ${SOURCES}
-                    INCLUDE_DIRS "" ./opencv ./bsp
-                    )
+                     INCLUDE_DIRS "" ./opencv ./bsp
+                )
+  
 
+if(NOT CONFIG_SOC_SDMMC_HOST_SUPPORTED)
+    fail_at_build_time(sdmmc ""
+                             "SDMMC host is not supported."
+                             "Please refer README.md for more details")
+endif()
 
 # OpenCV的静态库
 # add_prebuilt_library(opencv_imgcodecs "opencv/libopencv_imgcodecs.a")
