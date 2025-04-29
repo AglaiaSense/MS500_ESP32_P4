@@ -4,14 +4,14 @@
 #include "esp_timer.h"
 
 static const char *TAG = "BSP_UVC";
-extern uvc_t *uvc;
+extern device_ctx_t *device_ctx;
 
 static esp_err_t video_start_cb(uvc_format_t uvc_format, int width, int height, int rate, void *cb_ctx) {
     int type;
     struct v4l2_buffer buf;
     struct v4l2_format format;
     struct v4l2_requestbuffers req;
-    uvc_t *uvc = (uvc_t *)cb_ctx; // 获取UVC设备上下文
+    device_ctx_t *uvc = (device_ctx_t *)cb_ctx; // 获取UVC设备上下文
     uint32_t capture_fmt = 0;     // 初始化捕获格式
 
     ESP_LOGI(TAG, "UVC start"); // 记录UVC启动日志
@@ -154,7 +154,7 @@ static esp_err_t video_start_cb(uvc_format_t uvc_format, int width, int height, 
 
 static void video_stop_cb(void *cb_ctx) {
     int type;
-    uvc_t *uvc = (uvc_t *)cb_ctx; // 获取UVC设备上下文
+    device_ctx_t *uvc = (device_ctx_t *)cb_ctx; // 获取UVC设备上下文
 
     ESP_LOGI(TAG, "UVC stop"); // 记录UVC停止日志
 
@@ -172,7 +172,7 @@ static void video_stop_cb(void *cb_ctx) {
 }
 static uvc_fb_t *video_fb_get_cb(void *cb_ctx) {
     int64_t us;
-    uvc_t *uvc = (uvc_t *)cb_ctx; // 获取UVC设备上下文
+    device_ctx_t *uvc = (device_ctx_t *)cb_ctx; // 获取UVC设备上下文
     struct v4l2_format format;
     struct v4l2_buffer cap_buf;     // 摄像头捕获缓冲区
     struct v4l2_buffer m2m_out_buf; // 编码器输出缓冲区
@@ -228,7 +228,7 @@ static uvc_fb_t *video_fb_get_cb(void *cb_ctx) {
 
 static void video_fb_return_cb(uvc_fb_t *fb, void *cb_ctx) {
     struct v4l2_buffer m2m_cap_buf; // 定义编码器捕获缓冲区结构
-    uvc_t *uvc = (uvc_t *)cb_ctx;   // 获取UVC设备上下文
+    device_ctx_t *uvc = (device_ctx_t *)cb_ctx;   // 获取UVC设备上下文
 
     ESP_LOGD(TAG, "UVC return"); // 记录帧缓冲区返回日志
 
@@ -255,7 +255,7 @@ void bsp_uvc_init(void) {
         .fb_get_cb = video_fb_get_cb,
         .fb_return_cb = video_fb_return_cb,
         .stop_cb = video_stop_cb,
-        .cb_ctx = (void *)uvc,
+        .cb_ctx = (void *)device_ctx,
     };
 
     // 计算并分配UVC缓冲区大小
@@ -265,7 +265,7 @@ void bsp_uvc_init(void) {
 
     // 打印格式信息
     ESP_LOGI(TAG, "Format List");
-    ESP_LOGI(TAG, "\tFormat(1) = %s", uvc->format == V4L2_PIX_FMT_JPEG ? "MJPEG" : "H.264");
+    ESP_LOGI(TAG, "\tFormat(1) = %s", device_ctx->format == V4L2_PIX_FMT_JPEG ? "MJPEG" : "H.264");
 
     // 打印帧信息
     ESP_LOGI(TAG, "\tFrame(1) = %d * %d @%dfps",

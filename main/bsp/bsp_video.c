@@ -5,7 +5,7 @@
 
 
 static const char *TAG = "BSP_VIDEO";
-extern uvc_t *uvc;
+extern device_ctx_t *device_ctx;
 
 
 static const esp_video_init_csi_config_t csi_config[] = {
@@ -103,7 +103,7 @@ static void print_video_device_info(const struct v4l2_capability *capability)
  * @param uvc 指向uvc_t结构体的指针
  * @return esp_err_t 返回错误代码
  */
-static esp_err_t init_capture_video(uvc_t *uvc)
+static esp_err_t init_capture_video(device_ctx_t *uvc)
 {
     int fd;
     struct v4l2_capability capability;
@@ -127,7 +127,7 @@ static esp_err_t init_capture_video(uvc_t *uvc)
  * @param uvc 指向uvc_t结构体的指针
  * @return esp_err_t 返回错误代码
  */
-static esp_err_t init_codec_video(uvc_t *uvc)
+static esp_err_t init_codec_video(device_ctx_t *uvc)
 {
     int fd;
     const char *devpath = ENCODE_DEV_PATH;
@@ -209,9 +209,9 @@ void bsp_video_init(void) {
     ESP_ERROR_CHECK(esp_video_init(&cam_config));
     
     // 初始化视频捕获功能
-    ESP_ERROR_CHECK(init_capture_video(uvc));
+    ESP_ERROR_CHECK(init_capture_video(device_ctx));
     
     // 初始化视频编码功能
-    ESP_ERROR_CHECK(init_codec_video(uvc));
+    ESP_ERROR_CHECK(init_codec_video(device_ctx));
 }
  

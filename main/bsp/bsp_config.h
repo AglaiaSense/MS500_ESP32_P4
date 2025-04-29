@@ -49,7 +49,7 @@
 
 
 // 通用结构体定义
-typedef struct uvc {
+typedef struct device_ctx {
     int cap_fd;
     uint32_t format;
     uint8_t *cap_buffer[BUFFER_COUNT];
@@ -58,7 +58,7 @@ typedef struct uvc {
     uint8_t *m2m_cap_buffer;
 
     uvc_fb_t fb;
-} uvc_t;
+} device_ctx_t;
 
  
 // 函数声明
