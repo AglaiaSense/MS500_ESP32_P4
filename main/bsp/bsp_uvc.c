@@ -4,18 +4,19 @@
 #include "esp_timer.h"
 
 static const char *TAG = "BSP_UVC";
-extern device_ctx_t *device_ctx;
 
 static esp_err_t video_start_cb(uvc_format_t uvc_format, int width, int height, int rate, void *cb_ctx) {
     int type;
     struct v4l2_buffer buf;
     struct v4l2_format format;
     struct v4l2_requestbuffers req;
+    struct v4l2_format init_format;
+
     device_ctx_t *uvc = (device_ctx_t *)cb_ctx; // 获取UVC设备上下文
-    uint32_t capture_fmt = 0;     // 初始化捕获格式
+    uint32_t capture_fmt = 0;                   // 初始化捕获格式
 
     ESP_LOGI(TAG, "UVC start"); // 记录UVC启动日志
-    printf("--------------video_start_cb------------------\n");
+ 
 
     // 处理JPEG格式
     if (uvc->format == V4L2_PIX_FMT_JPEG) {
@@ -44,8 +45,6 @@ static esp_err_t video_start_cb(uvc_format_t uvc_format, int width, int height, 
             for (int i = 0; i < jpeg_input_formats_num; i++) {
                 if (jpeg_input_formats[i] == fmtdesc.pixelformat) {
                     capture_fmt = jpeg_input_formats[i];
-                    printf("--------------------------------\n");
-                    printf("index:%d\n", i);
                     break;
                 }
             }
@@ -57,9 +56,12 @@ static esp_err_t video_start_cb(uvc_format_t uvc_format, int width, int height, 
             return ESP_ERR_NOT_SUPPORTED;
         }
         printf("V4L2_PIX_FMT_JPEG\n");
-    } else {
-        printf("V4L2_PIX_FMT_YUV420\n");
-        capture_fmt = V4L2_PIX_FMT_YUYV; // 默认使用YUYV格式
+
+    } else if (uvc->format == V4L2_PIX_FMT_H264) {
+        printf("V4L2_PIX_FMT_H264\n");
+
+        /* Todo, fix input format when h264 encoder supports other formats */
+        capture_fmt = V4L2_PIX_FMT_YUV420;
     }
 
     // 配置摄像头捕获流
@@ -133,21 +135,35 @@ static esp_err_t video_start_cb(uvc_format_t uvc_format, int width, int height, 
     uvc->m2m_cap_buffer = (uint8_t *)mmap(NULL, buf.length, PROT_READ | PROT_WRITE,
                                           MAP_SHARED, uvc->m2m_fd, buf.m.offset);
     assert(uvc->m2m_cap_buffer); // 确保内存映射成功
-  
+
     // 将缓冲区加入编码器捕获队列
-    ESP_ERROR_CHECK(ioctl(uvc->m2m_fd, VIDIOC_QBUF, &buf));  // 将查询到的缓冲区加入编码器捕获队列
+    ESP_ERROR_CHECK(ioctl(uvc->m2m_fd, VIDIOC_QBUF, &buf)); // 将查询到的缓冲区加入编码器捕获队列
 
     // 启动编码器捕获
-    type = V4L2_BUF_TYPE_VIDEO_CAPTURE;  
-    ESP_ERROR_CHECK(ioctl(uvc->m2m_fd, VIDIOC_STREAMON, &type)); 
-    
+    type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    ESP_ERROR_CHECK(ioctl(uvc->m2m_fd, VIDIOC_STREAMON, &type));
+
     // 启动编码器输出流
-    type = V4L2_BUF_TYPE_VIDEO_OUTPUT;  
-    ESP_ERROR_CHECK(ioctl(uvc->m2m_fd, VIDIOC_STREAMON, &type));  
+    type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+    ESP_ERROR_CHECK(ioctl(uvc->m2m_fd, VIDIOC_STREAMON, &type));
 
     // 启动摄像头捕获流
-    type = V4L2_BUF_TYPE_VIDEO_CAPTURE;  
-    ESP_ERROR_CHECK(ioctl(uvc->cap_fd, VIDIOC_STREAMON, &type));  
+    type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    ESP_ERROR_CHECK(ioctl(uvc->cap_fd, VIDIOC_STREAMON, &type));
+
+    /* Skip the first few frames of the image to get a stable image. */
+    for (int i = 0; i < SKIP_STARTUP_FRAME_COUNT; i++) {
+        memset(&buf, 0, sizeof(buf));
+        buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        buf.memory = V4L2_MEMORY_MMAP;
+        ESP_ERROR_CHECK(ioctl(uvc->cap_fd, VIDIOC_DQBUF, &buf));
+        ESP_ERROR_CHECK(ioctl(uvc->cap_fd, VIDIOC_QBUF, &buf));
+    }
+
+    /* Init sd encoder frame buffer's basic info. */
+    // uvc->sd_fb.width = width;
+    // uvc->sd_fb.height = height;
+    // uvc->sd_fb.fmt = sd->format == V4L2_PIX_FMT_JPEG ? SD_IMG_FORMAT_JPEG : SD_IMG_FORMAT_H264;
 
     return ESP_OK;
 }
@@ -170,6 +186,7 @@ static void video_stop_cb(void *cb_ctx) {
     type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     ioctl(uvc->m2m_fd, VIDIOC_STREAMOFF, &type);
 }
+
 static uvc_fb_t *video_fb_get_cb(void *cb_ctx) {
     int64_t us;
     device_ctx_t *uvc = (device_ctx_t *)cb_ctx; // 获取UVC设备上下文
@@ -227,8 +244,8 @@ static uvc_fb_t *video_fb_get_cb(void *cb_ctx) {
 }
 
 static void video_fb_return_cb(uvc_fb_t *fb, void *cb_ctx) {
-    struct v4l2_buffer m2m_cap_buf; // 定义编码器捕获缓冲区结构
-    device_ctx_t *uvc = (device_ctx_t *)cb_ctx;   // 获取UVC设备上下文
+    struct v4l2_buffer m2m_cap_buf;             // 定义编码器捕获缓冲区结构
+    device_ctx_t *uvc = (device_ctx_t *)cb_ctx; // 获取UVC设备上下文
 
     ESP_LOGD(TAG, "UVC return"); // 记录帧缓冲区返回日志
 
@@ -243,13 +260,11 @@ static void video_fb_return_cb(uvc_fb_t *fb, void *cb_ctx) {
 
 // 初始化 UVC 设备
 
-void bsp_uvc_init(void) {
+void bsp_uvc_init(device_ctx_t *device_ctx) {
 
-    ESP_LOGI(TAG, "Initializing .......................");
-
+    ESP_LOGI(TAG, "Initializing ----------------------------------------- ");
 
     int index = 0;
-    uint32_t index22 = 1;
     uvc_device_config_t config = {
         .start_cb = video_start_cb,
         .fb_get_cb = video_fb_get_cb,
@@ -276,5 +291,4 @@ void bsp_uvc_init(void) {
     // 配置并初始化UVC设备
     ESP_ERROR_CHECK(uvc_device_config(index, &config));
     ESP_ERROR_CHECK(uvc_device_init());
-
 }

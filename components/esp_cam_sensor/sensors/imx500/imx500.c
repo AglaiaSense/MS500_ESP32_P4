@@ -110,7 +110,7 @@ static esp_err_t imx500_read(esp_sccb_io_handle_t sccb_handle, uint16_t reg, uin
     return ret;
 }
 static esp_err_t imx500_write(esp_sccb_io_handle_t sccb_handle, uint16_t reg, uint8_t data) {
-    esp_rom_printf("imx500_write: reg=0x%04x, data=0x%02x\n", reg, data);
+    // esp_rom_printf("imx500_write: reg=0x%04x, data=0x%02x\n", reg, data);
 
     return esp_sccb_transmit_reg_a16v8(sccb_handle, reg, data);
 }
@@ -712,7 +712,6 @@ static esp_err_t imx500_get_format(esp_cam_sensor_device_t *dev, esp_cam_sensor_
 static esp_err_t imx500_priv_ioctl(esp_cam_sensor_device_t *dev, uint32_t cmd, void *arg) {
     // 打印函数名和行号
     esp_rom_printf("%s(%d)\n", __func__, __LINE__);
-    esp_rom_printf("cmd: %lu, arg: %p\n", cmd, arg); // 打印cmd和arg
 
     // 检查指针是否为空
     ESP_CAM_SENSOR_NULL_POINTER_CHECK(TAG, dev);

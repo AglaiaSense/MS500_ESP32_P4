@@ -169,7 +169,7 @@ static esp_err_t ov5647_read(esp_sccb_io_handle_t sccb_handle, uint16_t reg, uin
 
     esp_err_t ret =  esp_sccb_transmit_receive_reg_a16v8(sccb_handle, reg, read_buf);
 
-    esp_rom_printf("ov5647_read:reg=0x%04x, data=0x%02x\n", reg, *read_buf);
+    // esp_rom_printf("ov5647_read:reg=0x%04x, data=0x%02x\n", reg, *read_buf);
 
     return ret;
 }
@@ -255,11 +255,7 @@ static esp_err_t ov5647_get_sensor_id(esp_cam_sensor_device_t *dev, esp_cam_sens
         id->pid = pid;
     }
 
-
      ret = ov5647_read(dev->sccb_handle, 0x3035, &pid_h);
-     esp_rom_printf("----------------------------------------\n");
-    esp_rom_printf("pid_h=0x%02x\n", pid_h);
-
 
     return ret;
 }
@@ -616,7 +612,6 @@ static esp_err_t ov5647_get_format(esp_cam_sensor_device_t *dev, esp_cam_sensor_
 
 static esp_err_t ov5647_priv_ioctl(esp_cam_sensor_device_t *dev, uint32_t cmd, void *arg) {
     esp_rom_printf("%s(%d)\n", __func__, __LINE__);
-    esp_rom_printf("cmd: %lu, arg: %p\n", cmd, arg); // 打印cmd和arg
 
     ESP_CAM_SENSOR_NULL_POINTER_CHECK(TAG, dev);
 

@@ -13,7 +13,7 @@ static const char *TAG = "BSP_SD_CARD";
 
 esp_err_t bsp_init_sd_card(device_ctx_t *sd) {
     // 记录初始化日志
-    ESP_LOGI(TAG, "Initializing .......................");
+    ESP_LOGI(TAG, "Initializing ----------------------------------------- ");
     ESP_LOGI("MEM", "Free Heap: %lu bytes", (unsigned long)esp_get_free_heap_size());
 
     // 定义返回值和SD卡指针

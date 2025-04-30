@@ -24,8 +24,16 @@
         "esp_vfs_fat.h": "c",
         "regex": "c",
         "xiosbase": "c",
-        "tusb.h": "c"
+        "tusb.h": "c",
+        "bitset": "c",
+        "chrono": "c",
+        "format": "c",
+        "stacktrace": "c",
+        "thread": "c",
+        "vector": "c"
     },
     "idf.portWin": "COM9",
-    "idf.flashType": "UART"
+    "idf.flashType": "UART",
+    "C_Cpp.intelliSenseMemoryLimit": 2048,
+    "C_Cpp.intelliSenseCacheSize": 2048
 }
