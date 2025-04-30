@@ -2,8 +2,11 @@
 #include "bsp_config.h"
 
 #include "esp_timer.h"
+#include "bsp_sd_card.h"
 
 static const char *TAG = "BSP_UVC";
+
+extern  esp_err_t store_jpg_to_sd_card(device_ctx_t *sd);
 
 static esp_err_t video_start_cb(uvc_format_t uvc_format, int width, int height, int rate, void *cb_ctx) {
     int type;
@@ -187,6 +190,22 @@ static void video_stop_cb(void *cb_ctx) {
     ioctl(uvc->m2m_fd, VIDIOC_STREAMOFF, &type);
 }
 
+
+static esp_err_t example_write_file(FILE *f, const uint8_t *data, size_t len)
+{
+    size_t written;
+
+    do {
+        written = fwrite(data, 1, len, f);
+        len -= written;
+        data += written;
+    } while ( written && len );
+    fflush(f);
+
+    return ESP_OK;
+}
+
+
 static uvc_fb_t *video_fb_get_cb(void *cb_ctx) {
     int64_t us;
     device_ctx_t *uvc = (device_ctx_t *)cb_ctx; // 获取UVC设备上下文
@@ -239,6 +258,9 @@ static uvc_fb_t *video_fb_get_cb(void *cb_ctx) {
     us = esp_timer_get_time();
     uvc->fb.timestamp.tv_sec = us / 1000000UL;  // 设置秒数
     uvc->fb.timestamp.tv_usec = us % 1000000UL; // 设置微秒数
+
+    store_jpg_to_sd_card(uvc); // 将JPEG数据存储到SD卡
+
 
     return &uvc->fb; // 返回帧缓冲区指针
 }

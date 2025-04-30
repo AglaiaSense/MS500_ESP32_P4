@@ -33,14 +33,15 @@ void bsp_struct_alloc(void) {
  
      bsp_struct_alloc();
      bsp_video_init(device_ctx);
- 
-     bsp_uvc_init(device_ctx);
- 
      bsp_init_sd_card(device_ctx);
-     bsp_sd_card_test(device_ctx);
-     bsp_deinit_sd_card(device_ctx);
 
      
+     bsp_uvc_init(device_ctx);
+ 
+
+     bsp_sd_card_test(device_ctx);
+
+
 
      ESP_LOGI(TAG, "finalizing ----------------------------------------- ");
  
