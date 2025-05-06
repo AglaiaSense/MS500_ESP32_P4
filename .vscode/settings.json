@@ -30,7 +30,9 @@
         "format": "c",
         "stacktrace": "c",
         "thread": "c",
-        "vector": "c"
+        "vector": "c",
+        "bsp_sd_card.h": "c",
+        "esp_timer.h": "c"
     },
     "idf.portWin": "COM9",
     "idf.flashType": "UART",

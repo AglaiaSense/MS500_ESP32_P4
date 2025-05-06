@@ -2,7 +2,6 @@
 #include "bsp_config.h"
 
 #include "esp_timer.h"
-#include "bsp_sd_card.h"
 
 static const char *TAG = "BSP_UVC";
 

@@ -41,8 +41,6 @@ void bsp_struct_alloc(void) {
 
      bsp_sd_card_test(device_ctx);
 
-
-
      ESP_LOGI(TAG, "finalizing ----------------------------------------- ");
  
  
