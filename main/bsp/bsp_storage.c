@@ -33,7 +33,6 @@ static esp_err_t example_write_file(FILE *f, const uint8_t *data, size_t len) {
     return ESP_OK;
 }
 
-// ... 其他代码保持不变 ...
 
 /**
  * @brief 获取JPG文件路径，每次调用会自动+1
@@ -89,11 +88,9 @@ esp_err_t get_jpg_file_path(char *file_path, size_t file_path_size) {
     // 生成完整文件路径
     snprintf(file_path, file_path_size, "%s/%d.jpg", folder_path, file_count);
 
-    ESP_LOGI(TAG, "Generated file path: %s", file_path);
     return ESP_OK;
 }
 esp_err_t store_jpg_to_sd_card(device_ctx_t *sd) {
-    printf("store_jpg_to_sd_card\n");
     char file_name_str[48] = {0};
     FILE *f = NULL;
     struct stat st;
@@ -121,7 +118,6 @@ esp_err_t store_jpg_to_sd_card(device_ctx_t *sd) {
     example_write_file(f, sd->fb.buf, sd->fb.len);
     fclose(f);
 
-    ESP_LOGI(TAG, "File written");
 
     return ESP_OK;
 }

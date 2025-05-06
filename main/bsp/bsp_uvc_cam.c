@@ -1,11 +1,11 @@
-#include "bsp_uvc.h"
+#include "bsp_uvc_cam.h"
 #include "bsp_config.h"
 
 #include "esp_timer.h"
 
-static const char *TAG = "BSP_UVC";
+static const char *TAG = "BSP_UVC_CAM";
 
-extern  esp_err_t store_jpg_to_sd_card(device_ctx_t *sd);
+extern esp_err_t store_jpg_to_sd_card(device_ctx_t *sd);
 
 static esp_err_t video_start_cb(uvc_format_t uvc_format, int width, int height, int rate, void *cb_ctx) {
     int type;
@@ -311,5 +311,4 @@ void bsp_uvc_init(device_ctx_t *device_ctx) {
 
     // 配置并初始化UVC设备
     ESP_ERROR_CHECK(uvc_device_config(index, &config));
-    ESP_ERROR_CHECK(uvc_device_init());
 }

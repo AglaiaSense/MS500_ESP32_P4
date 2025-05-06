@@ -32,7 +32,10 @@
         "thread": "c",
         "vector": "c",
         "bsp_sd_card.h": "c",
-        "esp_timer.h": "c"
+        "esp_timer.h": "c",
+        "bsp_uvc_cam.h": "c",
+        "inttypes.h": "c",
+        "bsp_uvc_jpg.h": "c"
     },
     "idf.portWin": "COM9",
     "idf.flashType": "UART",
