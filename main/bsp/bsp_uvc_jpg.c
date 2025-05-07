@@ -13,7 +13,9 @@
 #define WIDTH CONFIG_UVC_CAM2_FRAMESIZE_WIDTH
 #define HEIGHT CONFIG_UVC_CAM2_FRAMESIZE_HEIGT
 
-#define UVC_MAX_FRAMESIZE_SIZE (350 * 1024)
+static int file_index = 1; // 静态变量用于记录当前文件序号
+
+#define UVC_MAX_FRAMESIZE_SIZE (410 * 1024)
 
 static const char *TAG = "usb_cam2";
 static uvc_fb_t s_fb;
@@ -37,12 +39,21 @@ static uvc_fb_t *camera_fb_get_cb(void *cb_ctx) {
     (void)cb_ctx;
     uint64_t us = (uint64_t)esp_timer_get_time();
 
+    // 构造文件路径
+    char file_path[64];
+    snprintf(file_path, sizeof(file_path), "/sdcard/jpg1/%d.jpg", file_index);
+
     // 打开SPIFFS中的图片文件
-    FILE *file = fopen("/spiffs/150.jpg", "rb");
+    // FILE *file = fopen("/spiffs/150.jpg", "rb");
+    // FILE *file = fopen("/sdcard/jpg1/1.jpg", "rb");
+    FILE *file = fopen(file_path, "rb");
+
     if (!file) {
-        ESP_LOGE(TAG, "Failed to open image file");
+        ESP_LOGE(TAG, "Failed to open image file: %s", file_path);
         return NULL;
     }
+    // 更新文件序号，循环1-100
+    file_index = (file_index % 100) + 1;
 
     // 获取文件大小
     fseek(file, 0, SEEK_END);
@@ -62,8 +73,9 @@ static uvc_fb_t *camera_fb_get_cb(void *cb_ctx) {
     fread(jpg_data, 1, file_size, file);
     fclose(file);
 
-
     printf("%s(%d)\n", __func__, __LINE__);
+    ESP_LOGE(TAG, "file_path: %s", file_path);
+    ESP_LOGE(TAG, "file_size: %d", file_size);
 
     s_fb.buf = jpg_data;
     s_fb.len = file_size;

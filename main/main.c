@@ -18,6 +18,7 @@ static const char *TAG = "APP_MAIN";
 
 // 全局变量声明
 device_ctx_t *device_ctx;
+bool storage_enabled = false;  // 添加全局标志
 
 // 初始化 uvc_t 结构体
 void bsp_struct_alloc(void) {
@@ -28,9 +29,32 @@ void bsp_struct_alloc(void) {
     }
 }
 
-void app_main(void) {
+// 定义周期性任务
+void periodic_task(void *pvParameters)
+{
+    int count = 0;
+    while (1) {
+        printf("weak task running...: %d\r\n", count++);
+        vTaskDelay(pdMS_TO_TICKS(1000)); // 延时1秒
 
+        if (count % 10 == 0) {
+            storage_enabled = !storage_enabled;
+            ESP_LOGI(TAG, "Storage %s", storage_enabled ? "Enabled" : "Disabled");
+        }
+
+    }
+}
+
+void app_main(void) {
+    printf(" __  __  ____  _____  _____ \n");
+    printf("|  \\/  |/ ___||  _  ||  _  |\n");
+    printf("| .  . |\\___ \\| | | || | | |\n");
+    printf("| |\\/| | ___) | |_| || |_| |\n");
+    printf("|_|  |_||____/ \\___/  \\___/ \n");
+
+    xTaskCreate(periodic_task, "periodic_task", 2048, NULL, 5, NULL);
     ESP_LOGI(TAG, "Initializing ----------------------------------------- ");
+    
 
     esp_vfs_spiffs_conf_t conf = {
         .base_path = "/spiffs",

@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 
 static const char *TAG = "BSP_STORAGE";
+extern bool storage_enabled;
 // ----------------------------------  JPG----------------------------------
 
 static esp_err_t example_write_file(FILE *f, const uint8_t *data, size_t len) {
@@ -91,6 +92,14 @@ esp_err_t get_jpg_file_path(char *file_path, size_t file_path_size) {
     return ESP_OK;
 }
 esp_err_t store_jpg_to_sd_card(device_ctx_t *sd) {
+
+
+    // 检查存储是否被允许
+    if (!storage_enabled) {
+        // ESP_LOGI(TAG, "Storage is currently disabled");
+        return ESP_OK;
+    }
+
     char file_name_str[48] = {0};
     FILE *f = NULL;
     struct stat st;
@@ -100,7 +109,8 @@ esp_err_t store_jpg_to_sd_card(device_ctx_t *sd) {
     if (ret != ESP_OK) {
         return ret;
     }
-
+    ESP_LOGE(TAG, "file_name_str: %s", file_name_str);
+   
     // 检查文件是否已存在
     if (stat(file_name_str, &st) == 0) {
         ESP_LOGW(TAG, "Delete original file %s", file_name_str);

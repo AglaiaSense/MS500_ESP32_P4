@@ -239,7 +239,6 @@ void bsp_video_init(device_ctx_t *video) {
     
 
     // 初始化视频编码功能
-
 #if CONFIG_FORMAT_MJPEG_CAM1
 ESP_ERROR_CHECK(init_codec_mjpeg_video(video));
 

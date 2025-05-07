@@ -35,7 +35,8 @@
         "esp_timer.h": "c",
         "bsp_uvc_cam.h": "c",
         "inttypes.h": "c",
-        "bsp_uvc_jpg.h": "c"
+        "bsp_uvc_jpg.h": "c",
+        "sdmmc_cmd.h": "c"
     },
     "idf.portWin": "COM9",
     "idf.flashType": "UART",
