@@ -7,6 +7,10 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdbool.h>
+
 
 #include "esp_log.h"
 #include "esp_err.h"
@@ -106,7 +110,7 @@ typedef struct device_ctx {
 
  
 // 函数声明
-
+void delay_ms(int nms) ;
 
 
 #endif // BSP_CONFIG_H

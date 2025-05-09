@@ -5,6 +5,9 @@
 
 static const char *TAG = "BSP_UVC_CAM";
 
+static size_t s_cap_buf_len[BUFFER_COUNT];
+static size_t s_m2m_cap_buf_len;
+
 extern esp_err_t store_jpg_to_sd_card(device_ctx_t *sd);
 
 static esp_err_t video_start_cb(uvc_format_t uvc_format, int width, int height, int rate, void *cb_ctx) {
@@ -18,7 +21,6 @@ static esp_err_t video_start_cb(uvc_format_t uvc_format, int width, int height, 
     uint32_t capture_fmt = 0;                   // 初始化捕获格式
 
     ESP_LOGI(TAG, "UVC start"); // 记录UVC启动日志
- 
 
     // 处理JPEG格式
     if (uvc->format == V4L2_PIX_FMT_JPEG) {
@@ -88,6 +90,7 @@ static esp_err_t video_start_cb(uvc_format_t uvc_format, int width, int height, 
         buf.memory = V4L2_MEMORY_MMAP;
         buf.index = i;
         ESP_ERROR_CHECK(ioctl(uvc->cap_fd, VIDIOC_QUERYBUF, &buf));
+        s_cap_buf_len[i] = buf.length; // <— 记录下长度
 
         uvc->cap_buffer[i] = (uint8_t *)mmap(NULL, buf.length, PROT_READ | PROT_WRITE,
                                              MAP_SHARED, uvc->cap_fd, buf.m.offset);
@@ -132,6 +135,7 @@ static esp_err_t video_start_cb(uvc_format_t uvc_format, int width, int height, 
     buf.memory = V4L2_MEMORY_MMAP;                              // 设置内存映射方式
     buf.index = 0;                                              // 设置缓冲区索引为0
     ESP_ERROR_CHECK(ioctl(uvc->m2m_fd, VIDIOC_QUERYBUF, &buf)); // 查询缓冲区信息
+    s_m2m_cap_buf_len = buf.length;                             // <— 记录下长度
 
     // 映射内存到用户空间
     uvc->m2m_cap_buffer = (uint8_t *)mmap(NULL, buf.length, PROT_READ | PROT_WRITE,
@@ -189,21 +193,18 @@ static void video_stop_cb(void *cb_ctx) {
     ioctl(uvc->m2m_fd, VIDIOC_STREAMOFF, &type);
 }
 
-
-static esp_err_t example_write_file(FILE *f, const uint8_t *data, size_t len)
-{
+static esp_err_t example_write_file(FILE *f, const uint8_t *data, size_t len) {
     size_t written;
 
     do {
         written = fwrite(data, 1, len, f);
         len -= written;
         data += written;
-    } while ( written && len );
+    } while (written && len);
     fflush(f);
 
     return ESP_OK;
 }
-
 
 static uvc_fb_t *video_fb_get_cb(void *cb_ctx) {
     int64_t us;
@@ -260,7 +261,6 @@ static uvc_fb_t *video_fb_get_cb(void *cb_ctx) {
 
     store_jpg_to_sd_card(uvc); // 将JPEG数据存储到SD卡
 
-
     return &uvc->fb; // 返回帧缓冲区指针
 }
 
@@ -311,4 +311,76 @@ void bsp_uvc_init(device_ctx_t *device_ctx) {
 
     // 配置并初始化UVC设备
     ESP_ERROR_CHECK(uvc_device_config(index, &config));
+}
+
+void bsp_uvc_deinit(device_ctx_t *uvc) {
+    int type;
+    struct v4l2_requestbuffers req = {0};
+
+    ESP_LOGI(TAG, "BSP UVC Deinit ----------------------------------------- ");
+
+    // 1) 停掉所有流
+    type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    if (uvc->cap_fd >= 0)
+        ioctl(uvc->cap_fd, VIDIOC_STREAMOFF, &type);
+    type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+    if (uvc->m2m_fd >= 0)
+        ioctl(uvc->m2m_fd, VIDIOC_STREAMOFF, &type);
+    type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    if (uvc->m2m_fd >= 0)
+        ioctl(uvc->m2m_fd, VIDIOC_STREAMOFF, &type);
+
+    // 2) 释放内核端 buffer
+    req.count = 0;
+    req.memory = V4L2_MEMORY_MMAP;
+    if (uvc->cap_fd >= 0) {
+        req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        ioctl(uvc->cap_fd, VIDIOC_REQBUFS, &req);
+    }
+    if (uvc->m2m_fd >= 0) {
+        req.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+        ioctl(uvc->m2m_fd, VIDIOC_REQBUFS, &req);
+        req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        ioctl(uvc->m2m_fd, VIDIOC_REQBUFS, &req);
+    }
+
+    // 3) munmap 应用层映射
+    for (int i = 0; i < BUFFER_COUNT; i++) {
+        if (uvc->cap_buffer[i] && s_cap_buf_len[i] > 0) {
+            munmap(uvc->cap_buffer[i], s_cap_buf_len[i]);
+            uvc->cap_buffer[i] = NULL;
+            s_cap_buf_len[i] = 0;
+        }
+    }
+    if (uvc->m2m_cap_buffer && s_m2m_cap_buf_len > 0) {
+        munmap(uvc->m2m_cap_buffer, s_m2m_cap_buf_len);
+        uvc->m2m_cap_buffer = NULL;
+        s_m2m_cap_buf_len = 0;
+    }
+
+    // 4) 关闭设备
+    if (uvc->cap_fd >= 0) {
+        close(uvc->cap_fd);
+        uvc->cap_fd = -1;
+    }
+    if (uvc->m2m_fd >= 0) {
+        close(uvc->m2m_fd);
+        uvc->m2m_fd = -1;
+    }
+
+    // 5) 释放 UVC 层 buffer（动态分配的）
+    // if (uvc->uvc_buffer) {
+    //     free(uvc->uvc_buffer);
+    //     uvc->uvc_buffer = NULL;
+    // }
+
+    // 6) 停掉 UVC 任务/PHY
+    // if (uvc_device_deinit() != ESP_OK) {
+    //     ESP_LOGW(TAG, "uvc_device_deinit failed");
+    // }
+
+    // 7) 重置状态
+    uvc->format = 0;
+
+    ESP_LOGI(TAG, "BSP UVC Deinit complete");
 }

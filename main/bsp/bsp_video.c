@@ -8,19 +8,19 @@ static const esp_video_init_csi_config_t csi_config[] = {
         .sccb_config = {
             .init_sccb = true, // 初始化SCCB
             .i2c_config = {
-                .port      = CONFIG_EXAMPLE_MIPI_CSI_SCCB_I2C_PORT, // I2C端口
-                .scl_pin   = CONFIG_EXAMPLE_MIPI_CSI_SCCB_I2C_SCL_PIN, // I2C SCL引脚
-                .sda_pin   = CONFIG_EXAMPLE_MIPI_CSI_SCCB_I2C_SDA_PIN, // I2C SDA引脚
+                .port = CONFIG_EXAMPLE_MIPI_CSI_SCCB_I2C_PORT,       // I2C端口
+                .scl_pin = CONFIG_EXAMPLE_MIPI_CSI_SCCB_I2C_SCL_PIN, // I2C SCL引脚
+                .sda_pin = CONFIG_EXAMPLE_MIPI_CSI_SCCB_I2C_SDA_PIN, // I2C SDA引脚
             },
             .freq = CONFIG_EXAMPLE_MIPI_CSI_SCCB_I2C_FREQ, // I2C频率
         },
         .reset_pin = CONFIG_EXAMPLE_MIPI_CSI_CAM_SENSOR_RESET_PIN, // 摄像头传感器复位引脚
-        .pwdn_pin  = CONFIG_EXAMPLE_MIPI_CSI_CAM_SENSOR_PWDN_PIN, // 摄像头传感器电源引脚
+        .pwdn_pin = CONFIG_EXAMPLE_MIPI_CSI_CAM_SENSOR_PWDN_PIN,   // 摄像头传感器电源引脚
     },
 };
 
 static const esp_video_init_config_t cam_config = {
-    .csi      = csi_config, // CSI配置
+    .csi = csi_config, // CSI配置
 };
 /**
  * @brief 打印视频设备信息
@@ -29,22 +29,21 @@ static const esp_video_init_config_t cam_config = {
  *
  * @param capability 指向v4l2_capability结构体的指针，包含设备的能力信息。
  */
-static void print_video_device_info(const struct v4l2_capability *capability)
-{
+static void print_video_device_info(const struct v4l2_capability *capability) {
     // 打印设备版本信息
     ESP_LOGI(TAG, "version: %d.%d.%d", (uint16_t)(capability->version >> 16),
              (uint8_t)(capability->version >> 8),
              (uint8_t)capability->version);
-    
+
     // 打印设备驱动信息
     ESP_LOGI(TAG, "driver:  %s", capability->driver);
-    
+
     // 打印设备卡片信息
     ESP_LOGI(TAG, "card:    %s", capability->card);
-    
+
     // 打印设备总线信息
     ESP_LOGI(TAG, "bus:     %s", capability->bus_info);
-    
+
     // 打印设备能力信息
     ESP_LOGI(TAG, "capabilities:");
     if (capability->capabilities & V4L2_CAP_VIDEO_CAPTURE) {
@@ -98,8 +97,7 @@ static void print_video_device_info(const struct v4l2_capability *capability)
  * @param uvc 指向uvc_t结构体的指针
  * @return esp_err_t 返回错误代码
  */
-static esp_err_t init_capture_video(device_ctx_t *evice_ctx)
-{
+static esp_err_t init_capture_video(device_ctx_t *evice_ctx) {
     int fd;
     struct v4l2_capability capability;
 
@@ -119,15 +117,14 @@ static esp_err_t init_capture_video(device_ctx_t *evice_ctx)
 
 /**
  * @brief 设置编解码器控制参数
- * 
+ *
  * @param fd 设备文件描述符
  * @param ctrl_class 控制类（如V4L2_CID_JPEG_CLASS等）
  * @param id 控制项ID（如V4L2_CID_JPEG_COMPRESSION_QUALITY等）
  * @param value 要设置的值
  * @return esp_err_t 返回操作结果，成功返回ESP_OK，失败返回ESP_FAIL
  */
-static esp_err_t set_codec_control(int fd, uint32_t ctrl_class, uint32_t id, int32_t value)
-{
+static esp_err_t set_codec_control(int fd, uint32_t ctrl_class, uint32_t id, int32_t value) {
     // 定义扩展控制结构体
     struct v4l2_ext_controls controls;
     struct v4l2_ext_control control[1];
@@ -160,8 +157,7 @@ static esp_err_t set_codec_control(int fd, uint32_t ctrl_class, uint32_t id, int
  * @param sd 指向image_sd_card_t结构体的指针，用于保存编码配置信息
  * @return esp_err_t 返回操作结果，成功返回0
  */
- esp_err_t init_codec_h264_video(device_ctx_t *device_ctx)
-{
+esp_err_t init_codec_h264_video(device_ctx_t *device_ctx) {
     int fd;
     // 定义H.264编码设备路径
     const char *devpath = ESP_VIDEO_H264_DEVICE_NAME;
@@ -201,8 +197,7 @@ static esp_err_t set_codec_control(int fd, uint32_t ctrl_class, uint32_t id, int
  * @param sd 指向image_sd_card_t结构体的指针，用于保存编码配置信息
  * @return esp_err_t 返回操作结果，成功返回0
  */
- esp_err_t init_codec_mjpeg_video(device_ctx_t *device_ctx)
-{
+esp_err_t init_codec_mjpeg_video(device_ctx_t *device_ctx) {
     int fd;
     // 定义JPEG编码设备路径
     const char *devpath = ESP_VIDEO_JPEG_DEVICE_NAME;
@@ -230,26 +225,79 @@ static esp_err_t set_codec_control(int fd, uint32_t ctrl_class, uint32_t id, int
 
 void bsp_video_init(device_ctx_t *video) {
     ESP_LOGI(TAG, "Initializing ----------------------------------------- ");
-    
+
     // 初始化摄像头配置
     ESP_ERROR_CHECK(esp_video_init(&cam_config));
-    
+
     // 初始化视频捕获功能
     ESP_ERROR_CHECK(init_capture_video(video));
-    
 
     // 初始化视频编码功能
 #if CONFIG_FORMAT_MJPEG_CAM1
-ESP_ERROR_CHECK(init_codec_mjpeg_video(video));
+    ESP_ERROR_CHECK(init_codec_mjpeg_video(video));
 
 #elif CONFIG_FORMAT_H264_CAM1
-ESP_ERROR_CHECK(init_codec_h264_video(video));
+    ESP_ERROR_CHECK(init_codec_h264_video(video));
 
 #endif
-    
-// ESP_ERROR_CHECK(init_codec_h264_video(video));
 
-
-
+    // ESP_ERROR_CHECK(init_codec_h264_video(video));
 }
- 
+
+
+void bsp_video_deinit(device_ctx_t *video) {
+    ESP_LOGI(TAG, "Deinitializing ----------------------------------------- ");
+
+    // 1. 停止视频采集流
+    if (video->cap_fd >= 0) {
+        int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        if (ioctl(video->cap_fd, VIDIOC_STREAMOFF, &type) < 0) {
+            ESP_LOGW(TAG, "Failed to stop video capture stream (cap_fd=%d)", video->cap_fd);
+        }
+    }
+
+    // 2. 停止视频编码流（输出 + 捕获）
+    if (video->m2m_fd >= 0) {
+        int out_type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+        if (ioctl(video->m2m_fd, VIDIOC_STREAMOFF, &out_type) < 0) {
+            ESP_LOGW(TAG, "Failed to stop encoder output stream (m2m_fd=%d)", video->m2m_fd);
+        }
+
+        int cap_type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        if (ioctl(video->m2m_fd, VIDIOC_STREAMOFF, &cap_type) < 0) {
+            ESP_LOGW(TAG, "Failed to stop encoder capture stream (m2m_fd=%d)", video->m2m_fd);
+        }
+    }
+
+    // 3. 关闭视频采集设备
+    if (video->cap_fd >= 0) {
+        close(video->cap_fd);
+        video->cap_fd = -1;
+    }
+
+    // 4. 关闭编码器设备
+    if (video->m2m_fd >= 0) {
+        close(video->m2m_fd);
+        video->m2m_fd = -1;
+    }
+
+    // 重置设备格式信息
+    video->format = 0;
+
+    // 5. 停用摄像头供电（如果使用 PWDN 引脚）
+// #ifdef CONFIG_EXAMPLE_MIPI_CSI_CAM_SENSOR_PWDN_PIN
+//     gpio_set_direction(CONFIG_EXAMPLE_MIPI_CSI_CAM_SENSOR_PWDN_PIN, GPIO_MODE_OUTPUT);
+//     gpio_set_level(CONFIG_EXAMPLE_MIPI_CSI_CAM_SENSOR_PWDN_PIN, 1); // 关闭摄像头
+// #endif
+
+    // 6. 停用 MIPI CSI 控制器（如果使用 esp_cam_ctlr_enable）
+    // esp_cam_ctlr_disable() 如果你在初始化时用了 enable，可以在此调用 disable（可选）
+
+    // 7. 反初始化视频驱动
+    esp_err_t ret = esp_video_deinit();
+    if (ret != ESP_OK) {
+        ESP_LOGW(TAG, "esp_video_deinit failed: %s", esp_err_to_name(ret));
+    }
+
+    ESP_LOGI(TAG, "Deinitialization complete");
+}

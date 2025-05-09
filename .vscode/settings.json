@@ -36,7 +36,12 @@
         "bsp_uvc_cam.h": "c",
         "inttypes.h": "c",
         "bsp_uvc_jpg.h": "c",
-        "sdmmc_cmd.h": "c"
+        "sdmmc_cmd.h": "c",
+        "esp_sleep.h": "c",
+        "time.h": "c",
+        "esp_system.h": "c",
+        "bsp_rtc.h": "c",
+        "sdmmc_host.h": "c"
     },
     "idf.portWin": "COM9",
     "idf.flashType": "UART",

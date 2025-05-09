@@ -93,7 +93,7 @@ esp_err_t uvc_device_init(void);
  * @return ESP_OK on success
  *         ESP_FAIL if the UVC device could not be deinitialized
  */
-//esp_err_t uvc_device_deinit(void);
+esp_err_t uvc_device_deinit(void);
 
 #ifdef __cplusplus
 }

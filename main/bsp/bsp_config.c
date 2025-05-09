@@ -4,3 +4,6 @@
 
 static const char *TAG = "BSP_CONFIG";
 
+void delay_ms(int nms) {
+    vTaskDelay(pdMS_TO_TICKS(nms));
+}

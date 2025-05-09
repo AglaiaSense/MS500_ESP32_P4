@@ -314,3 +314,44 @@ esp_err_t uvc_device_init(void)
     ESP_LOGI(TAG, "UVC Device Start, Version: %d.%d.%d", USB_DEVICE_UVC_VER_MAJOR, USB_DEVICE_UVC_VER_MINOR, USB_DEVICE_UVC_VER_PATCH);
     return ESP_OK;
 }
+// usb_device_uvc.c
+
+esp_err_t uvc_device_deinit(void)
+{
+    ESP_LOGI(TAG, "UVC device deinit start");
+
+    // 1) 停掉 video_task(s)（如果已创建）
+#if (CFG_TUD_VIDEO)
+    for (int i = 0; i < UVC_CAM_NUM; i++) {
+        if (s_uvc_device.uvc_task_hdl[i]) {
+            vTaskDelete(s_uvc_device.uvc_task_hdl[i]);
+            s_uvc_device.uvc_task_hdl[i] = NULL;
+        }
+    }
+#endif
+
+    // 2) 停掉 TinyUSB 设备任务
+    //    （假设你在 init 里是直接用 tusb_init() + xTaskCreate 的）
+    //    如果你有 tusb_stop_task() 或 tinyusb_driver_uninstall()，也可以在这里调用
+
+    // 3) 释放 PHY
+    if (s_uvc_device.phy_hdl) {
+        usb_del_phy(s_uvc_device.phy_hdl);
+        s_uvc_device.phy_hdl = NULL;
+    }
+
+    // 4) 释放所有通过 uvc_device_config 分配的 uvc_buffer
+    for (int i = 0; i < UVC_CAM_NUM; i++) {
+        uvc_device_config_t *cfg = &s_uvc_device.user_config[i];
+        if (cfg->uvc_buffer) {
+            free(cfg->uvc_buffer);
+            cfg->uvc_buffer = NULL;
+            cfg->uvc_buffer_size = 0;
+        }
+        // 标记为未初始化
+        s_uvc_device.uvc_init[i] = false;
+    }
+
+    ESP_LOGI(TAG, "UVC device deinit complete");
+    return ESP_OK;
+}

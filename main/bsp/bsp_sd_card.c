@@ -212,6 +212,15 @@ static esp_err_t s_example_read_file(const char *path) {
 
 // ----------------------------------  SD测试----------------------------------
 
+void bsp_test_read(void){
+        const char *file_nihao = MOUNT_POINT "/nihao.txt";
+        // 读取第二个测试文件
+        esp_err_t  ret = s_example_read_file(file_nihao);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to read file %s", file_nihao);
+            return;
+        }
+}
 void bsp_sd_card_test(device_ctx_t *sd) {
     // 创建第一个测试文件
     const char *file_hello = MOUNT_POINT "/hello.txt";
