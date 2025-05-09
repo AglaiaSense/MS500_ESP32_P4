@@ -7,5 +7,6 @@
 #include "esp_log.h"
 
 void bsp_uvc_init(device_ctx_t *device_ctx);
+void bsp_uvc_deinit(device_ctx_t *uvc);
 
 #endif // BSP_UVC_CAM_H

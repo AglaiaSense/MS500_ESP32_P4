@@ -23,14 +23,23 @@ void check_wakeup_reason() {
         ESP_LOGI(TAG, "Not a deep sleep reset");
         break;
     }
-
-    ESP_LOGI(TAG, "-----------------------------------");
 }
 
-// 配置唤醒GPIO
-void configure_wakeup_gpio(gpio_num_t gpio_num, esp_sleep_ext1_wakeup_mode_t level_mode) {
-    //  唤醒
-    esp_sleep_enable_ext1_wakeup(gpio_num, level_mode);
+void configure_wakeup_gpio(void) {
+    /* Initialize GPIO */
+    gpio_config_t config = {
+        .pin_bit_mask = (1ULL << GPIO_NUM_45),
+        .mode = GPIO_MODE_INPUT,
+        .pull_down_en = true,
+        .pull_up_en = false,
+        .intr_type = GPIO_INTR_DISABLE};
+
+    gpio_config(&config);
+
+    gpio_wakeup_enable(GPIO_NUM_45, GPIO_INTR_HIGH_LEVEL);
+    // esp_sleep_enable_ext1_wakeup(gpio_num, level_mode);
+
+    esp_sleep_enable_gpio_wakeup();
 }
 
 // 配置唤醒时间
@@ -43,41 +52,15 @@ void configure_wakeup_timer(uint64_t sleep_time_us) {
     ESP_ERROR_CHECK(esp_sleep_enable_timer_wakeup(sleep_time_us));
 }
 
-// --------------------------   进入睡眠 ------------------------------------------
-void enter_light_sleep(uint64_t sleep_time_us, gpio_num_t gpio_num, esp_sleep_ext1_wakeup_mode_t level_mode) {
+// --------------------------   深度睡眠 ------------------------------------------
 
-    // 从睡眠中唤醒后，会继续执行下面的代码
+void enter_deep_sleep_time(uint64_t sleep_time_us) {
+
     ESP_LOGI(TAG, "==================================================================");
-    ESP_LOGI(TAG, "light sleep");
+    ESP_LOGI(TAG, "deep sleep time wakeup");
 
     // 配置唤醒源
-    if (sleep_time_us > 0) {
-        configure_wakeup_timer(sleep_time_us);
-    }
-    if (gpio_num != GPIO_NUM_NC) {
-        configure_wakeup_gpio(gpio_num, level_mode);
-    }
-
-    // 开始进入轻睡眠模式
-    esp_light_sleep_start();
-
-    // 检查唤醒原因
-    check_wakeup_reason();
-}
-
-void enter_deep_sleep(uint64_t sleep_time_us, gpio_num_t gpio_num, esp_sleep_ext1_wakeup_mode_t level_mode) {
-
-    // 从睡眠中唤醒后，会继续执行下面的代码
-    ESP_LOGI(TAG, "==================================================================");
-    ESP_LOGI(TAG, "deep sleep");
-
-    // 配置唤醒源
-    if (sleep_time_us > 0) {
-        configure_wakeup_timer(sleep_time_us);
-    }
-    if (gpio_num != GPIO_NUM_NC) {
-        configure_wakeup_gpio(gpio_num, level_mode);
-    }
+    configure_wakeup_timer(sleep_time_us);
 
     // 进入深度睡眠模式
     esp_deep_sleep_start();
@@ -86,40 +69,49 @@ void enter_deep_sleep(uint64_t sleep_time_us, gpio_num_t gpio_num, esp_sleep_ext
     check_wakeup_reason();
 }
 
-// 进入轻睡眠模式
-void enter_light_sleep_time(uint64_t sleep_time_us) {
-    enter_light_sleep(sleep_time_us, GPIO_NUM_NC, -1);
-}
-
-// 进入深度睡眠模式
-void enter_deep_sleep_time(uint64_t sleep_time_us) {
-    enter_deep_sleep(sleep_time_us, GPIO_NUM_NC, -1);
-}
-
-void gpio_wakeup_init(void) {
-    /* Initialize GPIO */
-    gpio_config_t config = {
-        .pin_bit_mask = GPIO_INPUT_PIN_SEL,
-        .mode = GPIO_MODE_INPUT,
-        .pull_down_en = false,
-        .pull_up_en = false,
-        .intr_type = GPIO_INTR_DISABLE};
-
-    gpio_config(&config);
-}
-
-void enter_light_sleep_gpio() {
-    gpio_wakeup_init();
-
-    /* Enable wake up from GPIO */
-    gpio_wakeup_enable(GPIO_INPUT_WAKEUP, GPIO_INPUT_WAKEUP_LEVEL == 0 ? GPIO_INTR_LOW_LEVEL : GPIO_INTR_HIGH_LEVEL);
-    esp_sleep_enable_gpio_wakeup();
-
-
-    esp_light_sleep_start();
-};
-
 // 进入深度睡眠模式
 void enter_deep_sleep_gpio() {
-    enter_deep_sleep(-1, GPIO_NUM_45, ESP_GPIO_WAKEUP_GPIO_HIGH);
+
+    ESP_LOGI(TAG, "==================================================================");
+    ESP_LOGI(TAG, "deep sleep gpio wakeup");
+
+    configure_wakeup_gpio();
+
+    // 开始进入轻睡眠模式
+    esp_deep_sleep_start();
+
+    // 检查唤醒原因
+    check_wakeup_reason();
+}
+
+// --------------------------   浅睡眠 ------------------------------------------
+
+void enter_light_sleep_time(uint64_t sleep_time_us) {
+
+    ESP_LOGI(TAG, "==================================================================");
+    ESP_LOGI(TAG, "light sleep time wakeup");
+
+    // 配置唤醒源
+    configure_wakeup_timer(sleep_time_us);
+
+    // 进入深度睡眠模式
+    esp_light_sleep_start();
+
+    // 检查唤醒原因
+    check_wakeup_reason();
+}
+
+// 进入深度睡眠模式
+void enter_light_sleep_gpio() {
+
+    ESP_LOGI(TAG, "==================================================================");
+    ESP_LOGI(TAG, "light sleep gpio wakeup");
+
+    configure_wakeup_gpio();
+
+    // 开始进入轻睡眠模式
+    esp_light_sleep_start();
+
+    // 检查唤醒原因
+    check_wakeup_reason();
 }

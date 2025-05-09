@@ -3,12 +3,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include <string.h>
-#include <inttypes.h>
+#include "esp_check.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "esp_timer.h"
-#include "esp_check.h"
+#include <inttypes.h>
+#include <string.h>
 #if CONFIG_TINYUSB_RHPORT_HS
 #include "soc/hp_sys_clkrst_reg.h"
 #include "soc/hp_system_reg.h"
@@ -36,8 +36,7 @@ typedef struct {
 
 static uvc_device_t s_uvc_device;
 
-static void usb_phy_init(void)
-{
+static void usb_phy_init(void) {
     // Configure USB PHY
     usb_phy_config_t phy_conf = {
         .controller = USB_PHY_CTRL_OTG,
@@ -50,31 +49,26 @@ static void usb_phy_init(void)
     usb_new_phy(&phy_conf, &s_uvc_device.phy_hdl);
 }
 
-static inline uint32_t get_time_millis(void)
-{
+static inline uint32_t get_time_millis(void) {
     return (uint32_t)(esp_timer_get_time() / 1000);
 }
 
-static void tusb_device_task(void *arg)
-{
+static void tusb_device_task(void *arg) {
     while (1) {
         tud_task();
     }
 }
 
-void tud_mount_cb(void)
-{
+void tud_mount_cb(void) {
     ESP_LOGI(TAG, "Mount");
 }
 
 // Invoked when device is unmounted
-void tud_umount_cb(void)
-{
+void tud_umount_cb(void) {
     ESP_LOGI(TAG, "UN-Mount");
 }
 
-void tud_suspend_cb(bool remote_wakeup_en)
-{
+void tud_suspend_cb(bool remote_wakeup_en) {
     (void)remote_wakeup_en;
 
     if (s_uvc_device.user_config[0].stop_cb) {
@@ -89,8 +83,7 @@ void tud_suspend_cb(bool remote_wakeup_en)
 }
 
 // Invoked when usb bus is resumed
-void tud_resume_cb(void)
-{
+void tud_resume_cb(void) {
     ESP_LOGI(TAG, "Resume");
 }
 
@@ -98,8 +91,7 @@ void tud_resume_cb(void)
 //--------------------------------------------------------------------+
 // USB Video
 //--------------------------------------------------------------------+
-static void video_task(void *arg)
-{
+static void video_task(void *arg) {
     uint32_t start_ms = 0;
     uint32_t frame_num = 0;
     uint32_t frame_len = 0;
@@ -163,8 +155,7 @@ static void video_task(void *arg)
 }
 
 #if CONFIG_UVC_SUPPORT_TWO_CAM
-static void video_task2(void *arg)
-{
+static void video_task2(void *arg) {
     uint32_t start_ms = 0;
     uint32_t frame_num = 0;
     uint32_t frame_len = 0;
@@ -228,16 +219,14 @@ static void video_task2(void *arg)
 }
 #endif
 
-void tud_video_frame_xfer_complete_cb(uint_fast8_t ctl_idx, uint_fast8_t stm_idx)
-{
+void tud_video_frame_xfer_complete_cb(uint_fast8_t ctl_idx, uint_fast8_t stm_idx) {
     (void)ctl_idx;
     (void)stm_idx;
     xTaskNotifyGive(s_uvc_device.uvc_task_hdl[ctl_idx]);
 }
 
 int tud_video_commit_cb(uint_fast8_t ctl_idx, uint_fast8_t stm_idx,
-                        video_probe_and_commit_control_t const *parameters)
-{
+                        video_probe_and_commit_control_t const *parameters) {
     (void)ctl_idx;
     (void)stm_idx;
     /* convert unit to ms from 100 ns */
@@ -259,8 +248,7 @@ int tud_video_commit_cb(uint_fast8_t ctl_idx, uint_fast8_t stm_idx,
 }
 #endif
 
-esp_err_t uvc_device_config(int index, uvc_device_config_t *config)
-{
+esp_err_t uvc_device_config(int index, uvc_device_config_t *config) {
     ESP_RETURN_ON_FALSE(index < UVC_CAM_NUM, ESP_ERR_INVALID_ARG, TAG, "index is invalid");
     ESP_RETURN_ON_FALSE(config != NULL, ESP_ERR_INVALID_ARG, TAG, "config is NULL");
     ESP_RETURN_ON_FALSE(config->start_cb != NULL, ESP_ERR_INVALID_ARG, TAG, "start_cb is NULL");
@@ -276,8 +264,10 @@ esp_err_t uvc_device_config(int index, uvc_device_config_t *config)
     return ESP_OK;
 }
 
-esp_err_t uvc_device_init(void)
-{
+// 全局变量声明
+static TaskHandle_t tusb_task_handle = NULL;
+
+esp_err_t uvc_device_init(void) {
     ESP_RETURN_ON_FALSE(s_uvc_device.uvc_init[0], ESP_ERR_INVALID_STATE, TAG, "uvc device 0 not init");
 #if CONFIG_UVC_SUPPORT_TWO_CAM
     ESP_RETURN_ON_FALSE(s_uvc_device.uvc_init[1], ESP_ERR_INVALID_STATE, TAG, "uvc device 1 not init, if not use, please disable CONFIG_UVC_SUPPORT_TWO_CAM");
@@ -302,7 +292,7 @@ esp_err_t uvc_device_init(void)
     }
 
     BaseType_t core_id = (CONFIG_UVC_TINYUSB_TASK_CORE < 0) ? tskNO_AFFINITY : CONFIG_UVC_TINYUSB_TASK_CORE;
-    xTaskCreatePinnedToCore(tusb_device_task, "TinyUSB", 4096, NULL, CONFIG_UVC_TINYUSB_TASK_PRIORITY, NULL, core_id);
+    xTaskCreatePinnedToCore(tusb_device_task, "TinyUSB", 4096, NULL, CONFIG_UVC_TINYUSB_TASK_PRIORITY, &tusb_task_handle, core_id);
 #if (CFG_TUD_VIDEO)
     core_id = (CONFIG_UVC_CAM1_TASK_CORE < 0) ? tskNO_AFFINITY : CONFIG_UVC_CAM1_TASK_CORE;
     xTaskCreatePinnedToCore(video_task, "UVC", 4096, NULL, CONFIG_UVC_CAM1_TASK_PRIORITY, &s_uvc_device.uvc_task_hdl[0], core_id);
@@ -316,29 +306,30 @@ esp_err_t uvc_device_init(void)
 }
 // usb_device_uvc.c
 
-esp_err_t uvc_device_deinit(void)
-{
+esp_err_t uvc_device_deinit(void) {
     ESP_LOGI(TAG, "UVC device deinit start");
 
+    if (tusb_task_handle != NULL) {
+        vTaskDelete(tusb_task_handle); // 删除任务
+        tusb_task_handle = NULL;
+    }
+
     // 1) 停掉 video_task(s)（如果已创建）
-#if (CFG_TUD_VIDEO)
     for (int i = 0; i < UVC_CAM_NUM; i++) {
         if (s_uvc_device.uvc_task_hdl[i]) {
             vTaskDelete(s_uvc_device.uvc_task_hdl[i]);
             s_uvc_device.uvc_task_hdl[i] = NULL;
         }
     }
-#endif
-
-    // 2) 停掉 TinyUSB 设备任务
-    //    （假设你在 init 里是直接用 tusb_init() + xTaskCreate 的）
-    //    如果你有 tusb_stop_task() 或 tinyusb_driver_uninstall()，也可以在这里调用
 
     // 3) 释放 PHY
     if (s_uvc_device.phy_hdl) {
         usb_del_phy(s_uvc_device.phy_hdl);
         s_uvc_device.phy_hdl = NULL;
     }
+
+    // 卸载 USB 协议栈
+    tusb_teardown();
 
     // 4) 释放所有通过 uvc_device_config 分配的 uvc_buffer
     for (int i = 0; i < UVC_CAM_NUM; i++) {

@@ -3,6 +3,8 @@
 #include "bsp_config.h"
 
 static const char *TAG = "BSP_CONFIG";
+extern device_ctx_t *device_ctx;
+
 
 void delay_ms(int nms) {
     vTaskDelay(pdMS_TO_TICKS(nms));

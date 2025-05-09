@@ -40,6 +40,33 @@ void inin_spiffs(void) {
     ESP_ERROR_CHECK(esp_vfs_spiffs_register(&conf));
 }
 
+void enter_light_sleep_before() {
+
+    uvc_device_deinit();
+
+    bsp_uvc_deinit(device_ctx);
+
+    bsp_video_deinit(device_ctx);
+
+    // sd卡最后卸载，别的功能还在用sd卡
+    bsp_deinit_sd_card(device_ctx);
+
+    delay_ms(500); // 延时1秒
+}
+void enter_light_sleep_after() {
+
+    delay_ms(500); // 延时1秒
+
+    bsp_init_sd_card(device_ctx);
+    bsp_test_read();
+
+    bsp_video_init(device_ctx);
+
+    bsp_uvc_init(device_ctx);
+    usb_cam2_init();
+    uvc_device_init();
+}
+
 // 定义周期性任务
 void periodic_task(void *pvParameters) {
     int count = 0;
@@ -55,26 +82,12 @@ void periodic_task(void *pvParameters) {
         // }
         if (count % 15 == 0) {
 
-            bsp_deinit_sd_card(device_ctx);
+            enter_light_sleep_before();
 
-            bsp_video_deinit(device_ctx);
-            
-            // uvc_device_deinit();
+            // enter_light_sleep_time(SEC_TO_USEC(10));
+            enter_light_sleep_gpio();
 
-            delay_ms(1000); // 延时1秒
-
-            enter_light_sleep_time(SEC_TO_USEC(10));
-            // enter_light_sleep_gpio();
-
-
-            bsp_init_sd_card(device_ctx);
-            bsp_test_read();
-
-            bsp_video_init(device_ctx);
-        
-            // bsp_uvc_init(device_ctx);
-            // usb_cam2_init();
-            // uvc_device_init();
+            enter_light_sleep_after();
         }
     }
 }
@@ -90,10 +103,10 @@ void app_main(void) {
     ESP_LOGI(TAG, "Initializing ----------------------------------------- ");
 
     // 确保以下电源域在睡眠时保持开启
-    esp_sleep_pd_config(ESP_PD_DOMAIN_VDDSDIO, ESP_PD_OPTION_ON);
-    esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_ON); // RTC 外设
-    esp_sleep_pd_config(ESP_PD_DOMAIN_XTAL, ESP_PD_OPTION_ON);       // 主晶振
-    ESP_LOGE(TAG, "VDDSDIO : %d", esp_sleep_pd_config(ESP_PD_DOMAIN_VDDSDIO, ESP_PD_OPTION_AUTO));
+    // esp_sleep_pd_config(ESP_PD_DOMAIN_VDDSDIO, ESP_PD_OPTION_ON);
+    // esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_ON); // RTC 外设
+    // esp_sleep_pd_config(ESP_PD_DOMAIN_XTAL, ESP_PD_OPTION_ON);       // 主晶振
+    // ESP_LOGE(TAG, "VDDSDIO : %d", esp_sleep_pd_config(ESP_PD_DOMAIN_VDDSDIO, ESP_PD_OPTION_AUTO));
 
     inin_spiffs();
     init_device_ctx();
@@ -102,11 +115,10 @@ void app_main(void) {
 
     bsp_video_init(device_ctx);
 
-    // bsp_uvc_init(device_ctx);
-    // usb_cam2_init();
-    // uvc_device_init();
+    bsp_uvc_init(device_ctx);
+    usb_cam2_init();
+    uvc_device_init();
 
-    // bsp_sd_card_test(device_ctx);
 
     ESP_LOGI(TAG, "finalizing ----------------------------------------- ");
 }
