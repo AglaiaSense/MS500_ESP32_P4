@@ -53,7 +53,7 @@ static uvc_fb_t *camera_fb_get_cb(void *cb_ctx) {
         return NULL;
     }
     // 更新文件序号，循环1-100
-    file_index = (file_index % 100) + 1;
+    file_index = (file_index % 10) + 1;
 
     // 获取文件大小
     fseek(file, 0, SEEK_END);

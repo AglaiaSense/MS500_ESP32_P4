@@ -20,7 +20,7 @@ static const char *TAG = "APP_MAIN";
 
 // 全局变量声明
 device_ctx_t *device_ctx;
-bool storage_enabled = false; // 添加全局标志
+bool storage_enabled = true; // 添加全局标志
 
 // 初始化 uvc_t 结构体
 void init_device_ctx(void) {
@@ -51,9 +51,13 @@ void enter_light_sleep_before() {
     // sd卡最后卸载，别的功能还在用sd卡
     bsp_deinit_sd_card(device_ctx);
 
+    ESP_LOGI(TAG, "enter_light_sleep_before ----------------------------------------- ");
+
     delay_ms(500); // 延时1秒
+    
 }
 void enter_light_sleep_after() {
+    ESP_LOGI(TAG, "enter_light_sleep_after ----------------------------------------- ");
 
     delay_ms(500); // 延时1秒
 

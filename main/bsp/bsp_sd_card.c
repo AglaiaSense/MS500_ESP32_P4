@@ -127,7 +127,12 @@ void bsp_deinit_sd_card(device_ctx_t *sd) {
     const char mount_point[] = MOUNT_POINT;
 
     // 卸载SD卡文件系统
-    ESP_ERROR_CHECK(esp_vfs_fat_sdcard_unmount(mount_point, sd->card));
+      esp_err_t ret = esp_vfs_fat_sdcard_unmount(mount_point, sd->card);
+        if (ret == ESP_OK) {
+            sd->card = NULL;  // 置空指针避免重复卸载
+        } else {
+            ESP_LOGE("SD", "Unmount failed: %s", esp_err_to_name(ret));
+        }
 
     // 记录日志，显示SD卡已卸载
     ESP_LOGI(TAG, "Card unmounted");
@@ -135,7 +140,7 @@ void bsp_deinit_sd_card(device_ctx_t *sd) {
     // 如果使用了内部LDO电源控制驱动，则进行反初始化
 #if CONFIG_EXAMPLE_SD_PWR_CTRL_LDO_INTERNAL_IO
     // 删除内部LDO电源控制驱动
-    esp_err_t ret = sd_pwr_ctrl_del_on_chip_ldo(sd->pwr_ctrl_handle);
+     ret = sd_pwr_ctrl_del_on_chip_ldo(sd->pwr_ctrl_handle);
 
     // 检查反初始化是否成功
     if (ret != ESP_OK) {
