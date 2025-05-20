@@ -4,7 +4,8 @@
 #include <sys/stat.h>
 
 static const char *TAG = "BSP_STORAGE";
-extern bool storage_enabled;
+extern bool is_store_jgp_allow;
+extern bool is_store_jpg_doing;
 // ----------------------------------  JPG----------------------------------
 
 static esp_err_t example_write_file(FILE *f, const uint8_t *data, size_t len) {
@@ -95,10 +96,12 @@ esp_err_t store_jpg_to_sd_card(device_ctx_t *sd) {
 
 
     // 检查存储是否被允许
-    if (!storage_enabled) {
+    if (!is_store_jgp_allow) {
         // ESP_LOGI(TAG, "Storage is currently disabled");
         return ESP_OK;
     }
+    is_store_jpg_doing = true; // 设置存储正在进行的标志
+
 
     char file_name_str[48] = {0};
     FILE *f = NULL;
@@ -128,6 +131,7 @@ esp_err_t store_jpg_to_sd_card(device_ctx_t *sd) {
     example_write_file(f, sd->fb.buf, sd->fb.len);
     fclose(f);
 
+    is_store_jpg_doing = false; // 重置存储正在进行的标志
 
     return ESP_OK;
 }

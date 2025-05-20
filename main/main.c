@@ -20,7 +20,10 @@ static const char *TAG = "APP_MAIN";
 
 // 全局变量声明
 device_ctx_t *device_ctx;
-bool storage_enabled = true; // 添加全局标志
+
+// 是否存图片
+bool is_store_jgp_allow = true;  // 是否允许存储图片
+bool is_store_jpg_doing = false; // 存储未结束，直接睡眠会闪退，所以要加个标志位
 
 // 初始化 uvc_t 结构体
 void init_device_ctx(void) {
@@ -42,6 +45,13 @@ void inin_spiffs(void) {
 
 void enter_light_sleep_before() {
 
+    // 优化图片存储
+    is_store_jgp_allow = false; // 禁止存储图片
+    while (is_store_jpg_doing == true) {
+        delay_ms(500);
+    }
+    printf("is_store_jpg_doing = %d\n", is_store_jpg_doing);
+
     uvc_device_deinit();
 
     bsp_uvc_deinit(device_ctx);
@@ -51,13 +61,13 @@ void enter_light_sleep_before() {
     // sd卡最后卸载，别的功能还在用sd卡
     bsp_deinit_sd_card(device_ctx);
 
-    ESP_LOGI(TAG, "enter_light_sleep_before ----------------------------------------- ");
+    ESP_LOGI(TAG, "-----------------------------------------：enter_light_sleep_before  ");
 
     delay_ms(500); // 延时1秒
-    
 }
 void enter_light_sleep_after() {
-    ESP_LOGI(TAG, "enter_light_sleep_after ----------------------------------------- ");
+    ESP_LOGI(TAG, "-----------------------------------------： enter_light_sleep_after");
+    is_store_jgp_allow = true;  
 
     delay_ms(500); // 延时1秒
 
@@ -80,8 +90,8 @@ void periodic_task(void *pvParameters) {
 
         // if (count > 100) {
         //     if (count % 10 == 0) {
-        //         storage_enabled = !storage_enabled;
-        //         ESP_LOGI(TAG, "Storage %s", storage_enabled ? "Enabled" : "Disabled");
+        //         is_store_jgp_allow = !is_store_jgp_allow;
+        //         ESP_LOGI(TAG, "Storage %s", is_store_jgp_allow ? "Enabled" : "Disabled");
         //     }
         // }
         if (count % 15 == 0) {
@@ -122,7 +132,6 @@ void app_main(void) {
     bsp_uvc_init(device_ctx);
     usb_cam2_init();
     uvc_device_init();
-
 
     ESP_LOGI(TAG, "finalizing ----------------------------------------- ");
 }

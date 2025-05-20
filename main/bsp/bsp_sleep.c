@@ -56,7 +56,6 @@ void configure_wakeup_timer(uint64_t sleep_time_us) {
 
 void enter_deep_sleep_time(uint64_t sleep_time_us) {
 
-    ESP_LOGI(TAG, "==================================================================");
     ESP_LOGI(TAG, "deep sleep time wakeup");
 
     // 配置唤醒源
@@ -72,7 +71,6 @@ void enter_deep_sleep_time(uint64_t sleep_time_us) {
 // 进入深度睡眠模式
 void enter_deep_sleep_gpio() {
 
-    ESP_LOGI(TAG, "==================================================================");
     ESP_LOGI(TAG, "deep sleep gpio wakeup");
 
     configure_wakeup_gpio();
@@ -88,7 +86,6 @@ void enter_deep_sleep_gpio() {
 
 void enter_light_sleep_time(uint64_t sleep_time_us) {
 
-    ESP_LOGI(TAG, "==================================================================");
     ESP_LOGI(TAG, "light sleep time wakeup");
 
     // 配置唤醒源
@@ -104,7 +101,6 @@ void enter_light_sleep_time(uint64_t sleep_time_us) {
 // 进入深度睡眠模式
 void enter_light_sleep_gpio() {
 
-    ESP_LOGI(TAG, "==================================================================");
     ESP_LOGI(TAG, "light sleep gpio wakeup");
 
     configure_wakeup_gpio();
