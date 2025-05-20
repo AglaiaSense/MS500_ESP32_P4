@@ -43,7 +43,8 @@
         "bsp_rtc.h": "c",
         "sdmmc_host.h": "c",
         "video_device.h": "c",
-        "usbd.h": "c"
+        "usbd.h": "c",
+        "stdlib.h": "c"
     },
     "idf.portWin": "COM9",
     "idf.flashType": "UART",

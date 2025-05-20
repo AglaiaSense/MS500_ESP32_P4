@@ -13,6 +13,7 @@
 #include "bsp_uvc_cam.h"
 #include "bsp_uvc_jpg.h"
 #include "bsp_video.h"
+#include "bsp_video_jpg.h"
 
 #include "esp_sleep.h"
 
@@ -22,7 +23,7 @@ static const char *TAG = "APP_MAIN";
 device_ctx_t *device_ctx;
 
 // 是否存图片
-bool is_store_jgp_allow = true;  // 是否允许存储图片
+bool is_store_jpg_allow = false; // 是否允许存储图片
 bool is_store_jpg_doing = false; // 存储未结束，直接睡眠会闪退，所以要加个标志位
 
 // 初始化 uvc_t 结构体
@@ -46,7 +47,7 @@ void inin_spiffs(void) {
 void enter_light_sleep_before() {
 
     // 优化图片存储
-    is_store_jgp_allow = false; // 禁止存储图片
+    is_store_jpg_allow = false; // 禁止存储图片
     while (is_store_jpg_doing == true) {
         delay_ms(500);
     }
@@ -67,7 +68,7 @@ void enter_light_sleep_before() {
 }
 void enter_light_sleep_after() {
     ESP_LOGI(TAG, "-----------------------------------------： enter_light_sleep_after");
-    is_store_jgp_allow = true;  
+    is_store_jpg_allow = true;
 
     delay_ms(500); // 延时1秒
 
@@ -88,12 +89,10 @@ void periodic_task(void *pvParameters) {
         printf("weak task running...: %d\r\n", count++);
         vTaskDelay(pdMS_TO_TICKS(1000)); // 延时1秒
 
-        // if (count > 100) {
-        //     if (count % 10 == 0) {
-        //         is_store_jgp_allow = !is_store_jgp_allow;
-        //         ESP_LOGI(TAG, "Storage %s", is_store_jgp_allow ? "Enabled" : "Disabled");
-        //     }
-        // }
+        if (count % 5 == 0) {
+              bsp_video_jpg_init(device_ctx);
+
+        }
         if (count % 15 == 0) {
 
             enter_light_sleep_before();
@@ -132,6 +131,8 @@ void app_main(void) {
     bsp_uvc_init(device_ctx);
     usb_cam2_init();
     uvc_device_init();
+
+    bsp_video_jpg_init(device_ctx);
 
     ESP_LOGI(TAG, "finalizing ----------------------------------------- ");
 }

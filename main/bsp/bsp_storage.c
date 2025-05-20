@@ -4,7 +4,7 @@
 #include <sys/stat.h>
 
 static const char *TAG = "BSP_STORAGE";
-extern bool is_store_jgp_allow;
+extern bool is_store_jpg_allow;
 extern bool is_store_jpg_doing;
 // ----------------------------------  JPG----------------------------------
 
@@ -96,7 +96,7 @@ esp_err_t store_jpg_to_sd_card(device_ctx_t *sd) {
 
 
     // 检查存储是否被允许
-    if (!is_store_jgp_allow) {
+    if (!is_store_jpg_allow) {
         // ESP_LOGI(TAG, "Storage is currently disabled");
         return ESP_OK;
     }
