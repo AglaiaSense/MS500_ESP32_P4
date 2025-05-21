@@ -69,7 +69,7 @@ void enter_light_sleep_before() {
 }
 void enter_light_sleep_after() {
     ESP_LOGI(TAG, "-----------------------------------------： enter_light_sleep_after");
-    is_store_jpg_allow = true;
+    // is_store_jpg_allow = true;
 
     delay_ms(500); // 延时1秒
 
@@ -117,24 +117,19 @@ void app_main(void) {
     ESP_LOGI(TAG, "Initializing ----------------------------------------- ");
     ai_gpio_init();
 
-    // 确保以下电源域在睡眠时保持开启
-    // esp_sleep_pd_config(ESP_PD_DOMAIN_VDDSDIO, ESP_PD_OPTION_ON);
-    // esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_ON); // RTC 外设
-    // esp_sleep_pd_config(ESP_PD_DOMAIN_XTAL, ESP_PD_OPTION_ON);       // 主晶振
-    // ESP_LOGE(TAG, "VDDSDIO : %d", esp_sleep_pd_config(ESP_PD_DOMAIN_VDDSDIO, ESP_PD_OPTION_AUTO));
+  
+    inin_spiffs();
+    init_device_ctx();
 
-    // inin_spiffs();
-    // init_device_ctx();
+    bsp_init_sd_card(device_ctx);
 
-    // bsp_init_sd_card(device_ctx);
+    bsp_video_init(device_ctx);
 
-    // bsp_video_init(device_ctx);
+    bsp_uvc_init(device_ctx);
+    usb_cam2_init();
+    uvc_device_init();
 
-    // bsp_uvc_init(device_ctx);
-    // usb_cam2_init();
-    // uvc_device_init();
-
-    // bsp_video_jpg_init(device_ctx);
+    bsp_video_jpg_init(device_ctx);
 
     ESP_LOGI(TAG, "finalizing ----------------------------------------- ");
 }
