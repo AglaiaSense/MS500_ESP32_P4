@@ -44,9 +44,12 @@
         "sdmmc_host.h": "c",
         "video_device.h": "c",
         "usbd.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "sdkconfig.h": "c",
+        "task.h": "c",
+        "ai_gpio.h": "c"
     },
-    "idf.portWin": "COM9",
+    "idf.portWin": "COM7",
     "idf.flashType": "UART",
     "C_Cpp.intelliSenseMemoryLimit": 2048,
     "C_Cpp.intelliSenseCacheSize": 2048

@@ -16,6 +16,7 @@
 #include "bsp_video_jpg.h"
 
 #include "esp_sleep.h"
+#include "ai_gpio.h"
 
 static const char *TAG = "APP_MAIN";
 
@@ -90,15 +91,15 @@ void periodic_task(void *pvParameters) {
         vTaskDelay(pdMS_TO_TICKS(1000)); // 延时1秒
 
         if (count % 5 == 0) {
-              bsp_video_jpg_init(device_ctx);
+            //   bsp_video_jpg_init(device_ctx);
 
         }
-        if (count % 15 == 0) {
+        if (count % 30 == 0) {
 
             enter_light_sleep_before();
 
-            // enter_light_sleep_time(SEC_TO_USEC(10));
-            enter_light_sleep_gpio();
+            enter_light_sleep_time(SEC_TO_USEC(10));
+            // enter_light_sleep_gpio();
 
             enter_light_sleep_after();
         }
@@ -114,6 +115,7 @@ void app_main(void) {
 
     xTaskCreate(periodic_task, "periodic_task", 1024 * 8, NULL, 5, NULL);
     ESP_LOGI(TAG, "Initializing ----------------------------------------- ");
+    ai_gpio_init();
 
     // 确保以下电源域在睡眠时保持开启
     // esp_sleep_pd_config(ESP_PD_DOMAIN_VDDSDIO, ESP_PD_OPTION_ON);
@@ -121,18 +123,18 @@ void app_main(void) {
     // esp_sleep_pd_config(ESP_PD_DOMAIN_XTAL, ESP_PD_OPTION_ON);       // 主晶振
     // ESP_LOGE(TAG, "VDDSDIO : %d", esp_sleep_pd_config(ESP_PD_DOMAIN_VDDSDIO, ESP_PD_OPTION_AUTO));
 
-    inin_spiffs();
-    init_device_ctx();
+    // inin_spiffs();
+    // init_device_ctx();
 
-    bsp_init_sd_card(device_ctx);
+    // bsp_init_sd_card(device_ctx);
 
-    bsp_video_init(device_ctx);
+    // bsp_video_init(device_ctx);
 
-    bsp_uvc_init(device_ctx);
-    usb_cam2_init();
-    uvc_device_init();
+    // bsp_uvc_init(device_ctx);
+    // usb_cam2_init();
+    // uvc_device_init();
 
-    bsp_video_jpg_init(device_ctx);
+    // bsp_video_jpg_init(device_ctx);
 
     ESP_LOGI(TAG, "finalizing ----------------------------------------- ");
 }
