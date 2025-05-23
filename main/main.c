@@ -106,7 +106,7 @@ void periodic_task(void *pvParameters) {
     }
 }
 
-void app_main(void) {
+void app_main_video(void) {
     printf(" __  __  ____  _____  _____ \n");
     printf("|  \\/  |/ ___||  _  ||  _  |\n");
     printf("| .  . |\\___ \\| | | || | | |\n");

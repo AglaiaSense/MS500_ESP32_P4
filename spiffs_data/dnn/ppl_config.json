@@ -1,0 +1,10 @@
+{
+    "header" :
+    {
+        "id" : "00",
+        "version" : "01.00.00"
+    },
+    "max_detections" : 5,
+    "threshold" : 0.6
+}
+
