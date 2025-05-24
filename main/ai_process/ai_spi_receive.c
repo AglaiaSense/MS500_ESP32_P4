@@ -42,6 +42,8 @@ int ssr_dnn_out_LPD_LPR(void) {
     while (1) {
         // Clear receive buffer, set send buffer to something sane
         memset(recvbuf, 0x00, SLAVE_RECEIVE_BUF_SIZE);
+                vTaskDelay(pdMS_TO_TICKS(100)); // 延时1秒
+
 
         tensor1.length = SLAVE_RECEIVE_BUF_SIZE * 8;
         tensor1.tx_buffer = NULL;

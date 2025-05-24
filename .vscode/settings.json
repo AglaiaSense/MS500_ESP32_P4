@@ -68,7 +68,8 @@
         "utility": "c",
         "valarray": "c",
         "xstring": "c",
-        "xutility": "c"
+        "xutility": "c",
+        "xlocale": "c"
     },
     "idf.portWin": "COM7",
     "idf.flashType": "UART",

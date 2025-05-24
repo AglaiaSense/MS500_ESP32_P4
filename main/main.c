@@ -98,11 +98,11 @@ void enter_light_sleep_after() {
 void periodic_task(void *pvParameters) {
     int count = 0;
     while (1) {
-        printf("weak task running...: %d\r\n", count++);
+        printf("task running...: %d\r\n", count++);
         vTaskDelay(pdMS_TO_TICKS(1000)); // 延时1秒
 
         if (count % 10 == 0) {
-            bsp_video_jpg_init(device_ctx);
+            // bsp_video_jpg_init(device_ctx);
         }
         if (count % 30 == 0) {
 
@@ -120,11 +120,11 @@ void video_cam_init(void) {
     // 这里初始化I2c,mipi
     bsp_video_init(device_ctx);
 
-    // bsp_uvc_init(device_ctx);
-    // usb_cam2_init();
-    // uvc_device_init();
+    bsp_uvc_init(device_ctx);
+    usb_cam2_init();
+    uvc_device_init();
 
-    // bsp_video_jpg_init(device_ctx);
+    bsp_video_jpg_init(device_ctx);
 
     ESP_LOGI(TAG, "finalizing ----------------------------------------- ");
 }
@@ -175,15 +175,16 @@ void imx501_lpr_main(void) {
     spi_master_dev_destroy();
     spi_slave_dev_init();
     printf("%s(%d) \n", __func__, __LINE__);
-
 }
-void imx500_lpr_receive(void) {
 
+void spi_slave_task(void *pvParam) {
     printf("%s(%d) \n", __func__, __LINE__);
 
     /* spi slave接收数据并处理 */
     spi_slave_receive_data();
 }
+
+ 
 void app_device_init(void) {
     printf(" __  __  ____  _____  _____ \n");
     printf("|  \\/  |/ ___||  _  ||  _  |\n");
@@ -191,7 +192,7 @@ void app_device_init(void) {
     printf("| |\\/| | ___) | |_| || |_| |\n");
     printf("|_|  |_||____/ \\___/  \\___/ \n");
 
-    xTaskCreate(periodic_task, "periodic_task", 1024 * 8, NULL, 5, NULL);
+    xTaskCreate(periodic_task, "periodic_task", 1024 * 2, NULL, 7, NULL);
     ESP_LOGI(TAG, "Initializing ----------------------------------------- ");
 
     // ------------------------ 初始化硬件 ------------------------
@@ -204,8 +205,7 @@ void app_device_init(void) {
 
     spi_master_dev_init();
 
-    // 在video中会单独初始化
-    // ai_i2c_master_init();
+ 
 }
 void app_config_init(void) {
     init_device_ctx();
@@ -223,8 +223,7 @@ void app_main(void) {
     // MIPI里面有I2C
     ai_i2c_copy_sccb_handle();
 
-
     imx501_lpr_main();
 
-    imx500_lpr_receive();
+    xTaskCreate(spi_slave_task, "spi_slave", 1024 * 8, NULL, 5, NULL);
 }
