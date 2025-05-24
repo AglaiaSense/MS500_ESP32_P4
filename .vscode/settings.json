@@ -47,7 +47,12 @@
         "stdlib.h": "c",
         "sdkconfig.h": "c",
         "task.h": "c",
-        "ai_gpio.h": "c"
+        "ai_gpio.h": "c",
+        "fw_dnn.h": "c",
+        "imx501.h": "c",
+        "ai_i2c.h": "c",
+        "bsp_video_jpg.h": "c",
+        "bsp_sleep.h": "c"
     },
     "idf.portWin": "COM7",
     "idf.flashType": "UART",

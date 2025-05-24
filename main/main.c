@@ -15,8 +15,8 @@
 #include "bsp_video.h"
 #include "bsp_video_jpg.h"
 
-#include "esp_sleep.h"
 #include "ai_gpio.h"
+#include "esp_sleep.h"
 
 static const char *TAG = "APP_MAIN";
 
@@ -38,8 +38,8 @@ void init_device_ctx(void) {
 void inin_spiffs(void) {
     esp_vfs_spiffs_conf_t conf = {
         .base_path = "/spiffs",
-        .partition_label = "avi",
-        .max_files = 5, // This decides the maximum number of files that can be created on the storage
+        .partition_label = NULL, // 这里可以设置为NULL，表示使用第一个分区
+        .max_files = 5,          // This decides the maximum number of files that can be created on the storage
         .format_if_mount_failed = false};
 
     ESP_ERROR_CHECK(esp_vfs_spiffs_register(&conf));
@@ -90,23 +90,21 @@ void periodic_task(void *pvParameters) {
         printf("weak task running...: %d\r\n", count++);
         vTaskDelay(pdMS_TO_TICKS(1000)); // 延时1秒
 
-        if (count % 5 == 0) {
-            //   bsp_video_jpg_init(device_ctx);
-
+        if (count % 10 == 0) {
+            bsp_video_jpg_init(device_ctx);
         }
         if (count % 30 == 0) {
 
-            enter_light_sleep_before();
+            //     enter_light_sleep_before();
 
-            enter_light_sleep_time(SEC_TO_USEC(10));
-            // enter_light_sleep_gpio();
+            //     enter_light_sleep_time(SEC_TO_USEC(10));
+            //     // enter_light_sleep_gpio();
 
-            enter_light_sleep_after();
+            //     enter_light_sleep_after();
         }
     }
 }
-
-void app_main_video(void) {
+void video_cam_init(void) {
     printf(" __  __  ____  _____  _____ \n");
     printf("|  \\/  |/ ___||  _  ||  _  |\n");
     printf("| .  . |\\___ \\| | | || | | |\n");
@@ -117,7 +115,6 @@ void app_main_video(void) {
     ESP_LOGI(TAG, "Initializing ----------------------------------------- ");
     ai_gpio_init();
 
-  
     inin_spiffs();
     init_device_ctx();
 
@@ -132,4 +129,7 @@ void app_main_video(void) {
     bsp_video_jpg_init(device_ctx);
 
     ESP_LOGI(TAG, "finalizing ----------------------------------------- ");
+}
+void app_main(void) {
+    video_cam_init();
 }
