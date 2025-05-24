@@ -3,12 +3,14 @@
 
 static const char *TAG = "BSP_SPIFF";
 
+ 
+
 void bsp_spiff_init(void) {
     ESP_LOGI(TAG, "Initializing SPIFFS");
 
     esp_vfs_spiffs_conf_t conf = {
         .base_path = "/spiffs",
-        .partition_label = NULL,
+        .partition_label = NULL,  // 这里可以设置为NULL，表示使用第一个分区
         .max_files = 5,
         .format_if_mount_failed = false
     };

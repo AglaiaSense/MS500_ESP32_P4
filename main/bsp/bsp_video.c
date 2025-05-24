@@ -3,7 +3,7 @@
 
 static const char *TAG = "BSP_VIDEO";
 
-static const esp_video_init_csi_config_t csi_config[] = {
+const esp_video_init_csi_config_t csi_config[] = {
     {
         .sccb_config = {
             .init_sccb = true, // 初始化SCCB
@@ -18,8 +18,7 @@ static const esp_video_init_csi_config_t csi_config[] = {
         .pwdn_pin = CONFIG_EXAMPLE_MIPI_CSI_CAM_SENSOR_PWDN_PIN,   // 摄像头传感器电源引脚
     },
 };
-
-static const esp_video_init_config_t cam_config = {
+ const esp_video_init_config_t cam_config = {
     .csi = csi_config, // CSI配置
 };
 /**
@@ -226,8 +225,11 @@ esp_err_t init_codec_mjpeg_video(device_ctx_t *device_ctx) {
 void bsp_video_init(device_ctx_t *video) {
     ESP_LOGI(TAG, "Initializing ----------------------------------------- ");
 
+     // 绑定配置到设备上下文
+    video->cam_config = &cam_config;  // 使用指针引用
+
     // 初始化摄像头配置
-    ESP_ERROR_CHECK(esp_video_init(&cam_config));
+    ESP_ERROR_CHECK(esp_video_init(video->cam_config));
 
     // 初始化视频捕获功能
     ESP_ERROR_CHECK(init_capture_video(video));

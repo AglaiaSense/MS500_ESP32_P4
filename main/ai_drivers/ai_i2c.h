@@ -3,7 +3,7 @@
 
  #include "stdint.h"
  #include "esp_err.h"
- 
+
 #define IMX501_SENSOR_ADDR          (0x1A)           /*!< IMX501传感器的从设备地址 */
 
 #define I2C_MASTER_SCL_IO           (8)             /*!< I2C主时钟使用的GPIO引脚号 */
@@ -17,6 +17,7 @@
 void ai_i2c_master_init(void) ;
 void ai_i2c_master_uninit(void) ;
 
+void ai_i2c_copy_sccb_handle(void) ;
 
 esp_err_t ai_i2c_register_read(uint16_t reg_addr, size_t *data, size_t size);
 esp_err_t ai_i2c_register_read_id(uint16_t reg_addr, uint8_t *data, size_t size);

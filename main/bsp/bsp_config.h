@@ -102,6 +102,9 @@ typedef struct device_ctx {
 
     sd_card_fb_t sd_fb;
     sdmmc_card_t *card;
+
+ const esp_video_init_config_t *cam_config; // 配置指针
+
 #if CONFIG_EXAMPLE_SD_PWR_CTRL_LDO_INTERNAL_IO
     sd_pwr_ctrl_handle_t pwr_ctrl_handle;  /*!< Power control handle */
 #endif

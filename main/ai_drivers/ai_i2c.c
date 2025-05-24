@@ -1,10 +1,11 @@
 #include "ai_i2c.h"
 #include "driver/i2c_master.h"
 #include "esp_log.h"
+#include "esp_video_device_internal.h"
 
 static const char *TAG = "AI_I2C";
 
-// 新增全局句柄
+#if 0
 static i2c_master_bus_handle_t bus_handle = NULL;
 static i2c_master_dev_handle_t dev_handle = NULL;
 
@@ -48,47 +49,66 @@ void ai_i2c_master_uninit(void) {
     }
     ESP_LOGI(TAG, "I2C de-initialized successfully");
 }
+#endif
+static esp_sccb_io_handle_t sccb_handle = NULL;
 
-esp_err_t ai_i2c_register_read(uint16_t reg_addr, size_t *data, size_t size) {
-    uint8_t write_buf[2] = {(reg_addr >> 8) & 0xff, reg_addr & 0xff};
-    uint8_t read_buf[4] = {0};
+void ai_i2c_copy_sccb_handle(void) {
+    printf("%s(%d) \n", __func__, __LINE__);
 
-    // 创建传输描述符
-    i2c_master_transmit_receive(
-        dev_handle,
-        write_buf, sizeof(write_buf),
-        read_buf, size,
-        I2C_MASTER_TIMEOUT_MS);
-
-    *data = 0;
-    for (int i = 0; i < size; i++) {
-        *data |= (size_t)(read_buf[i] << ((size - 1 - i) * 8));
+    esp_cam_sensor_device_t *cam_dev = esp_video_get_csi_video_device_sensor();
+    if (cam_dev && cam_dev->sccb_handle) {
+        sccb_handle = cam_dev->sccb_handle;
+    }else {
+        ESP_LOGE(TAG, "Failed to get camera sensor device");
     }
+}
+esp_err_t ai_i2c_register_read(uint16_t reg_addr, size_t *data, size_t size) {
+    if (!sccb_handle || !data || (size != 1 && size != 2 && size != 4)) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    uint8_t temp;
+    *data = 0;
+
+    for (size_t i = 0; i < size; i++) {
+        esp_err_t ret = esp_sccb_transmit_receive_reg_a16v8(sccb_handle, reg_addr + i, &temp);
+        if (ret != ESP_OK) {
+            return ret;
+        }
+        *data |= ((size_t)temp << ((size - 1 - i) * 8));
+    }
+
     return ESP_OK;
 }
 
-esp_err_t ai_i2c_register_read_id(uint16_t reg_addr, uint8_t *data, size_t size) {
-    uint8_t write_buf[2] = {(reg_addr >> 8) & 0xff, reg_addr & 0xff};
 
-    return i2c_master_transmit_receive(
-        dev_handle,
-        write_buf, sizeof(write_buf),
-        data, size,
-        I2C_MASTER_TIMEOUT_MS);
+esp_err_t ai_i2c_register_read_id(uint16_t reg_addr, uint8_t *data, size_t size) {
+    if (!sccb_handle || !data || size == 0) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    for (size_t i = 0; i < size; i++) {
+        esp_err_t ret = esp_sccb_transmit_receive_reg_a16v8(sccb_handle, reg_addr + i, &data[i]);
+        if (ret != ESP_OK) {
+            return ret;
+        }
+    }
+
+    return ESP_OK;
 }
 
 esp_err_t ai_i2c_register_write(uint16_t reg_addr, size_t data, size_t size) {
-    uint8_t write_buf[6] = {
-        (reg_addr >> 8) & 0xff,
-        reg_addr & 0xff};
-
-    // 数据打包
-    for (int i = 0; i < size; i++) {
-        write_buf[2 + i] = (data >> (8 * (size - 1 - i))) & 0xff;
+    if (!sccb_handle || (size != 1 && size != 2 && size != 4)) {
+        return ESP_ERR_INVALID_ARG;
     }
 
-    return i2c_master_transmit(
-        dev_handle,
-        write_buf, 2 + size,
-        I2C_MASTER_TIMEOUT_MS);
+    for (size_t i = 0; i < size; i++) {
+        uint8_t byte = (data >> ((size - 1 - i) * 8)) & 0xFF;
+        esp_err_t ret = esp_sccb_transmit_reg_a16v8(sccb_handle, reg_addr + i, byte);
+        if (ret != ESP_OK) {
+            return ret;
+        }
+    }
+
+    return ESP_OK;
 }
