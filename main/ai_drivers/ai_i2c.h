@@ -1,8 +1,9 @@
 #ifndef AI_I2C_H
 #define AI_I2C_H
 
-#include "driver/i2c.h"
-
+ #include "stdint.h"
+ #include "esp_err.h"
+ 
 #define IMX501_SENSOR_ADDR          (0x1A)           /*!< IMX501传感器的从设备地址 */
 
 #define I2C_MASTER_SCL_IO           (8)             /*!< I2C主时钟使用的GPIO引脚号 */

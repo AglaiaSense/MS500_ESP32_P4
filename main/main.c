@@ -130,6 +130,6 @@ void video_cam_init(void) {
 
     ESP_LOGI(TAG, "finalizing ----------------------------------------- ");
 }
-void app_main(void) {
-    video_cam_init();
-}
+// void app_main(void) {
+//     video_cam_init();
+// }

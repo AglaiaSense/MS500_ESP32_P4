@@ -52,7 +52,8 @@
         "imx501.h": "c",
         "ai_i2c.h": "c",
         "bsp_video_jpg.h": "c",
-        "bsp_sleep.h": "c"
+        "bsp_sleep.h": "c",
+        "i2c.h": "c"
     },
     "idf.portWin": "COM7",
     "idf.flashType": "UART",

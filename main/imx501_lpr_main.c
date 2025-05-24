@@ -89,6 +89,6 @@ void imx501_lpr_main(void) {
 }
 
 /* 主函数 */
-// void app_main(void) {
-//     imx501_lpr_main();
-// }
+void app_main(void) {
+    imx501_lpr_main();
+}

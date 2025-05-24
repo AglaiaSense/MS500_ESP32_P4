@@ -7,9 +7,8 @@
 #ifndef __IMX501_H__
 #define __IMX501_H__
 
-#include "driver/i2c.h"
-
-
+ #include "stdint.h"
+ #include "esp_err.h"
 
 /* imx501 configuration */
 
